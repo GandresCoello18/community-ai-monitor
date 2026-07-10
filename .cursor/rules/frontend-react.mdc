@@ -1,0 +1,78 @@
+---
+description: Reglas específicas para desarrollo frontend React - Community AI Monitor
+globs:
+  - "frontend/**/*"
+alwaysApply: true
+---
+
+# Frontend React Development Rules
+
+## 1. Contexto
+
+El frontend es una SPA React que consume la API y WebSockets del backend.
+
+Responsabilidades:
+
+- Dashboard de monitoreo.
+- Visualización de cámaras.
+- Estadísticas y alertas.
+- Historial de eventos.
+
+El frontend NO debe contener lógica de procesamiento de IA ni visión por computadora.
+
+---
+
+# 2. Stack obligatorio
+
+- React.
+- TypeScript (obligatorio).
+- Comunicación con backend vía API REST y WebSockets.
+
+---
+
+# 3. Principios de componentes
+
+Mantener:
+
+- Componentes reutilizables y pequeños.
+- Separación entre lógica de presentación y lógica de datos.
+- Tipos definidos para contratos con el backend.
+
+Evitar:
+
+- Lógica de negocio dentro de componentes de UI.
+- Componentes monolíticos.
+- Dependencias implícitas de estructuras de datos del backend.
+
+---
+
+# 4. Comunicación con backend
+
+- Usar DTOs y tipos compartidos o definidos en el frontend.
+- No asumir estructuras de respuesta sin validación.
+- Seguir contratos definidos en `api-contracts-websocket.mdc`.
+
+---
+
+# 5. Estado y datos
+
+- Separar hooks de fetching (API/WebSocket) de componentes de presentación.
+- Manejar estados de carga, error y vacío de forma explícita.
+
+---
+
+# 6. Seguridad
+
+- No almacenar secretos en el código frontend.
+- No exponer información sensible en el cliente.
+- Validar y sanitizar entradas del usuario.
+
+---
+
+# 7. Testing
+
+Priorizar pruebas de:
+
+- Hooks de datos.
+- Componentes críticos del dashboard.
+- Integración con contratos de API.

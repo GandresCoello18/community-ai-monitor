@@ -1,0 +1,526 @@
+---
+description: Reglas para contratos API REST, DTOs, WebSockets y comunicación backend/frontend
+globs:
+  - "backend/app/api/**/*.py"
+  - "backend/app/schemas/**/*.py"
+  - "backend/app/websocket/**/*.py"
+  - "frontend/**/*"
+alwaysApply: true
+---
+
+# API Contracts and WebSocket Rules
+
+## 1. Contexto
+
+Community AI Monitor utiliza comunicación entre:
+
+- Backend Python/FastAPI.
+- Frontend React.
+- Procesadores internos de IA.
+
+La comunicación debe ser:
+
+- predecible,
+- documentada,
+- versionable,
+- estable.
+
+Los contratos son una parte crítica del sistema.
+
+---
+
+# 2. Principios generales
+
+Toda comunicación debe cumplir:
+
+- Contratos explícitos.
+- Estructuras consistentes.
+- Validación de datos.
+- Manejo uniforme de errores.
+
+Evitar:
+
+- respuestas diferentes para casos similares,
+- estructuras dinámicas sin documentación,
+- enviar modelos internos directamente.
+
+---
+
+# 3. API REST
+
+Utilizar REST para:
+
+- configuración,
+- consultas históricas,
+- administración,
+- reportes,
+- estadísticas.
+
+Ejemplos:
+
+```
+
+GET    /api/v1/cameras
+
+GET    /api/v1/events
+
+GET    /api/v1/statistics
+
+POST   /api/v1/cameras
+
+```
+
+---
+
+# 4. Versionamiento
+
+Todas las APIs públicas deben utilizar versión.
+
+Ejemplo:
+
+Correcto:
+
+```
+
+/api/v1/events
+
+```
+
+Incorrecto:
+
+```
+
+/events
+
+````
+
+Esto permite evolucionar el sistema sin romper clientes existentes.
+
+---
+
+# 5. Estructura de respuestas
+
+Todas las respuestas deben mantener consistencia.
+
+Respuesta exitosa:
+
+```json
+{
+  "data": {},
+  "meta": {}
+}
+````
+
+Ejemplo:
+
+```json
+{
+  "data": {
+    "id": "uuid",
+    "name": "Camera 01"
+  }
+}
+```
+
+---
+
+# 6. Listados y paginación
+
+Toda colección debe soportar paginación.
+
+Ejemplo:
+
+Request:
+
+```
+GET /events?page=1&limit=20
+```
+
+Response:
+
+```json
+{
+  "data": [],
+  "meta": {
+    "page":1,
+    "limit":20,
+    "total":300
+  }
+}
+```
+
+Nunca retornar listas enormes sin límite.
+
+---
+
+# 7. Filtros
+
+Los filtros deben ser explícitos.
+
+Ejemplo:
+
+```
+GET /events?
+
+camera_id=xxx
+
+event_type=crowd
+
+start_date=2026-01-01
+
+end_date=2026-01-10
+```
+
+Evitar endpoints diferentes para cada filtro.
+
+---
+
+# 8. DTOs
+
+Los contratos HTTP deben utilizar Pydantic schemas.
+
+Ejemplo:
+
+```
+schemas/
+
+CameraCreate
+
+CameraResponse
+
+EventResponse
+```
+
+Nunca retornar:
+
+```python
+SQLAlchemy Model
+```
+
+directamente.
+
+---
+
+# 9. Naming conventions
+
+Utilizar:
+
+JSON:
+
+```json
+{
+ "camera_id": "123",
+ "created_at": "date"
+}
+```
+
+No utilizar:
+
+```json
+{
+ "cameraId": "123"
+}
+```
+
+Mantener snake_case en todo el backend.
+
+---
+
+# 10. Fechas
+
+Todas las fechas deben utilizar:
+
+ISO 8601.
+
+Ejemplo:
+
+```json
+{
+ "created_at":
+ "2026-07-10T15:30:00Z"
+}
+```
+
+Siempre UTC.
+
+---
+
+# 11. Manejo de errores
+
+Todas las APIs deben retornar errores consistentes.
+
+Formato:
+
+```json
+{
+ "error": {
+   "code": "CAMERA_NOT_FOUND",
+   "message": "Camera does not exist"
+ }
+}
+```
+
+---
+
+# 12. Códigos HTTP
+
+Utilizar correctamente:
+
+## 200
+
+Operación exitosa.
+
+## 201
+
+Recurso creado.
+
+## 400
+
+Datos inválidos.
+
+## 401
+
+No autenticado.
+
+## 403
+
+Sin permisos.
+
+## 404
+
+Recurso no encontrado.
+
+## 409
+
+Conflicto.
+
+## 500
+
+Error interno.
+
+---
+
+# 13. Excepciones
+
+No manejar errores directamente en routers.
+
+Ejemplo incorrecto:
+
+```python
+try:
+    service.create()
+except:
+    return JSONResponse(...)
+```
+
+Usar:
+
+* excepciones personalizadas,
+* exception handlers globales.
+
+---
+
+# 14. Documentación OpenAPI
+
+Toda API debe estar correctamente documentada.
+
+Incluir:
+
+* descripción,
+* parámetros,
+* respuestas,
+* errores posibles.
+
+FastAPI debe generar documentación útil automáticamente.
+
+---
+
+# 15. WebSockets
+
+WebSockets se utilizarán para información en tiempo real.
+
+Casos:
+
+* nuevos eventos,
+* alertas,
+* cambios de estado,
+* actualizaciones del dashboard.
+
+---
+
+# 16. Eventos WebSocket
+
+Todos los mensajes deben tener una estructura estándar.
+
+Ejemplo:
+
+```json
+{
+ "event": "new_detection",
+ "timestamp": "2026-07-10T15:30:00Z",
+ "data": {
+   "camera_id":"123",
+   "object":"person"
+ }
+}
+```
+
+---
+
+# 17. Tipos de eventos
+
+Los nombres deben ser consistentes.
+
+Ejemplos:
+
+```
+camera.connected
+
+camera.disconnected
+
+event.created
+
+alert.created
+
+summary.generated
+```
+
+Utilizar:
+
+```
+entidad.acción
+```
+
+---
+
+# 18. WebSocket Rooms
+
+Cuando exista crecimiento:
+
+Separar conexiones por contexto.
+
+Ejemplo:
+
+```
+community:001
+
+camera:001
+
+dashboard:001
+```
+
+No enviar todos los eventos a todos los clientes.
+
+---
+
+# 19. Reconexión
+
+El frontend debe poder reconectar.
+
+El backend debe:
+
+* mantener estado,
+* permitir nueva conexión,
+* no depender de una sesión permanente.
+
+---
+
+# 20. Eventos de IA
+
+Los eventos generados por visión deben tener contratos claros.
+
+Ejemplo:
+
+```json
+{
+"type":"abandoned_object",
+"severity":"medium",
+"camera_id":"camera-01",
+"occurred_at":"2026-07-10T15:30:00Z",
+"metadata":{
+  "duration_seconds":600
+}
+}
+```
+
+---
+
+# 21. No enviar datos innecesarios
+
+El backend debe controlar qué información expone.
+
+No enviar:
+
+* información interna del modelo,
+* logs,
+* datos sensibles,
+* detalles técnicos innecesarios.
+
+---
+
+# 22. Comunicación con frontend
+
+El backend es la fuente de verdad.
+
+El frontend no debe:
+
+* calcular eventos,
+* interpretar detecciones,
+* aplicar reglas de negocio.
+
+Ejemplo:
+
+Incorrecto:
+
+Frontend decide:
+
+```
+si personas > 10 entonces alerta
+```
+
+Correcto:
+
+Backend envía:
+
+```json
+{
+"type":"crowd_detected"
+}
+```
+
+---
+
+# 23. Compatibilidad futura
+
+Los contratos deben diseñarse pensando en:
+
+* aplicación móvil,
+* integraciones externas,
+* múltiples clientes.
+
+Evitar estructuras demasiado específicas del frontend actual.
+
+---
+
+# 24. Testing
+
+Crear pruebas para:
+
+* respuestas API,
+* validaciones,
+* códigos HTTP,
+* eventos WebSocket.
+
+---
+
+# 25. Regla final
+
+La API debe ser considerada un producto independiente.
+
+Debe poder ser consumida por:
+
+* React.
+* Aplicación móvil.
+* Otros sistemas.
+
+Un buen contrato evita dependencias y facilita la evolución del sistema.

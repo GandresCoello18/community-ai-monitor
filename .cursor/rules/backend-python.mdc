@@ -1,0 +1,650 @@
+---
+description: Reglas específicas para desarrollo backend Python - Community AI Monitor
+globs:
+  - "backend/**/*.py"
+alwaysApply: true
+---
+
+# Backend Python Development Rules
+
+## 1. Contexto del Backend
+
+El backend es el núcleo principal del sistema Community AI Monitor.
+
+Sus responsabilidades principales son:
+
+- Exponer APIs.
+- Gestionar cámaras.
+- Procesar eventos.
+- Integrar modelos de visión artificial.
+- Gestionar detecciones.
+- Generar información estructurada.
+- Integrar modelos LLM.
+- Persistir información histórica.
+
+El backend NO debe depender del frontend.
+
+El frontend consume información generada por el backend.
+
+---
+
+# 2. Stack obligatorio
+
+Utilizar:
+
+- Python 3.12+
+- FastAPI
+- SQLAlchemy 2.0
+- Pydantic v2
+- PostgreSQL
+- Alembic
+- Pytest
+
+Evitar introducir frameworks alternativos sin justificación.
+
+---
+
+# 3. Estructura del proyecto
+
+Mantener la siguiente separación:
+
+```
+
+backend/app
+
+├── api
+│   └── HTTP routes, controllers
+
+├── core
+│   └── configuration, security, shared utilities
+
+├── database
+│   └── database connection, sessions
+
+├── models
+│   └── SQLAlchemy entities
+
+├── schemas
+│   └── Pydantic DTOs
+
+├── repositories
+│   └── database operations
+
+├── services
+│   └── business logic
+
+├── detection
+│   └── computer vision
+
+├── tracking
+│   └── object tracking
+
+├── events
+│   └── event processing
+
+├── llm
+│   └── language model integrations
+
+├── workers
+│   └── background processing
+
+└── main.py
+
+````
+
+No mezclar responsabilidades.
+
+---
+
+# 4. FastAPI
+
+Los endpoints deben ser delgados.
+
+Los routers únicamente deben:
+
+- Recibir requests.
+- Validar datos.
+- Llamar servicios.
+- Retornar respuestas.
+
+Ejemplo correcto:
+
+```python
+@router.post("/cameras")
+async def create_camera(
+    data: CameraCreate,
+    service: CameraService = Depends()
+):
+    return await service.create(data)
+````
+
+No colocar lógica:
+
+* SQL.
+* procesamiento IA.
+* reglas de negocio.
+
+dentro de los endpoints.
+
+---
+
+# 5. Servicios
+
+Toda lógica de negocio debe vivir en servicios.
+
+Ejemplo:
+
+```
+CameraService
+
+EventService
+
+DetectionService
+
+AlertService
+
+SummaryService
+```
+
+Los servicios pueden:
+
+* Coordinar procesos.
+* Aplicar reglas.
+* Utilizar repositorios.
+* Ejecutar operaciones externas.
+
+---
+
+# 6. Repositorios
+
+Toda interacción con PostgreSQL debe pasar por repositorios.
+
+Ejemplo:
+
+```
+CameraRepository
+
+EventRepository
+
+DetectionRepository
+```
+
+No realizar consultas SQL dentro de servicios o endpoints.
+
+---
+
+# 7. SQLAlchemy
+
+Usar SQLAlchemy 2.0 style.
+
+Preferir:
+
+```python
+select(Camera)
+```
+
+Evitar:
+
+```python
+session.query(Camera)
+```
+
+---
+
+Los modelos SQLAlchemy representan únicamente persistencia.
+
+No deben contener:
+
+* lógica de negocio,
+* llamadas externas,
+* integración con IA.
+
+---
+
+# 8. Pydantic
+
+Separar modelos de base de datos y esquemas API.
+
+Ejemplo:
+
+```
+models/
+
+CameraModel
+
+
+schemas/
+
+CameraCreate
+CameraResponse
+```
+
+Nunca retornar directamente modelos SQLAlchemy.
+
+---
+
+# 9. Async
+
+Utilizar async cuando exista operación I/O:
+
+* Base de datos.
+* APIs externas.
+* WebSockets.
+* Procesamiento concurrente.
+
+Ejemplo:
+
+```python
+async def process_event():
+    ...
+```
+
+No bloquear el event loop con operaciones pesadas.
+
+---
+
+# 10. Procesamiento de Video
+
+El procesamiento de video debe estar desacoplado de FastAPI.
+
+Nunca:
+
+```
+FastAPI Request
+
+↓
+
+YOLO Inference
+
+↓
+
+Response
+```
+
+Correcto:
+
+```
+Camera Worker
+
+↓
+
+Detection Pipeline
+
+↓
+
+Database
+
+↓
+
+API
+```
+
+---
+
+# 11. Computer Vision
+
+Separar:
+
+## Captura
+
+Responsable:
+
+* Obtener frames.
+* Administrar streams.
+
+Ejemplo:
+
+```
+CameraStreamService
+```
+
+---
+
+## Detección
+
+Responsable:
+
+* Ejecutar modelo.
+* Detectar objetos.
+
+Ejemplo:
+
+```
+YOLODetector
+```
+
+---
+
+## Tracking
+
+Responsable:
+
+* Mantener identidad temporal.
+
+Ejemplo:
+
+```
+ObjectTracker
+```
+
+---
+
+No mezclar detección con reglas de negocio.
+
+---
+
+# 12. Modelos de visión
+
+Los modelos deben implementarse mediante adaptadores.
+
+Ejemplo:
+
+```
+detection/
+
+├── base.py
+
+├── yolo.py
+
+└── factory.py
+```
+
+Permitir cambiar:
+
+* YOLO.
+* Otro modelo.
+* Modelo remoto.
+
+sin cambiar la lógica principal.
+
+---
+
+# 13. Sistema de eventos
+
+Los eventos son el núcleo del negocio.
+
+Una detección NO siempre es un evento.
+
+Ejemplo:
+
+Detección:
+
+```
+Persona detectada
+```
+
+Evento:
+
+```
+Persona permaneció 30 minutos
+```
+
+---
+
+El flujo debe ser:
+
+```
+Detection
+
+↓
+
+Event Rules
+
+↓
+
+Event
+
+↓
+
+Alert/Summary
+```
+
+---
+
+# 14. Reglas de eventos
+
+Las reglas deben ser módulos independientes.
+
+Ejemplo:
+
+```
+events/rules/
+
+├── abandoned_object.py
+
+├── crowd_detection.py
+
+├── long_presence.py
+```
+
+No colocar reglas directamente en servicios generales.
+
+---
+
+# 15. Background Workers
+
+Procesos largos deben ejecutarse fuera del request.
+
+Ejemplos:
+
+* Captura continua de cámaras.
+* Inferencia.
+* Generación de resúmenes.
+* Procesamiento de colas.
+
+Usar inicialmente:
+
+* asyncio tasks.
+
+Preparar arquitectura para evolucionar hacia:
+
+* Redis Queue.
+* Celery.
+* Dramatiq.
+
+---
+
+# 16. Integración LLM
+
+El LLM no procesa video.
+
+Nunca enviar:
+
+* imágenes completas,
+* streams,
+* frames continuos.
+
+El flujo correcto:
+
+```
+Video
+
+↓
+
+Detections
+
+↓
+
+Events
+
+↓
+
+Structured Data
+
+↓
+
+LLM
+```
+
+---
+
+Crear una capa independiente:
+
+```
+llm/
+
+├── client.py
+
+├── prompts.py
+
+├── schemas.py
+```
+
+---
+
+# 17. Modelos LLM
+
+El proveedor debe ser intercambiable.
+
+No acoplar lógica a:
+
+* OpenAI.
+* Gemini.
+* Llama.
+
+Usar interfaces.
+
+Ejemplo:
+
+```
+LLMProvider
+
+    |
+    ├── OpenAIProvider
+    ├── LocalLlamaProvider
+    └── GeminiProvider
+```
+
+---
+
+# 18. Configuración
+
+Utilizar:
+
+* Pydantic Settings.
+
+Ejemplo:
+
+```python
+class Settings(BaseSettings):
+    database_url: str
+    llm_model: str
+```
+
+Nunca:
+
+```python
+DATABASE_URL = "..."
+```
+
+---
+
+# 19. Logging
+
+Utilizar logging estructurado.
+
+Registrar:
+
+* procesamiento de cámaras,
+* errores de modelos,
+* eventos generados,
+* fallos externos.
+
+No utilizar:
+
+```python
+print()
+```
+
+---
+
+# 20. Errores
+
+Crear excepciones específicas.
+
+Ejemplo:
+
+```
+CameraNotFoundError
+
+DetectionProcessingError
+
+LLMProviderError
+```
+
+Evitar:
+
+```python
+except Exception:
+```
+
+sin manejo.
+
+---
+
+# 21. Testing
+
+Cada módulo importante debe tener pruebas.
+
+Prioridad:
+
+1. Event rules.
+2. Services.
+3. Repositories.
+4. API endpoints.
+
+Usar:
+
+```
+pytest
+```
+
+---
+
+# 22. Migraciones
+
+Todo cambio de estructura de base de datos debe utilizar Alembic.
+
+Nunca modificar tablas manualmente.
+
+---
+
+# 23. Dependencias nuevas
+
+Antes de agregar una dependencia:
+
+Evaluar:
+
+* mantenimiento,
+* comunidad,
+* licencia,
+* impacto.
+
+No instalar paquetes por comodidad.
+
+---
+
+# 24. Seguridad
+
+Siempre considerar:
+
+* Validación de inputs.
+* Protección de secretos.
+* Control de acceso.
+* Rate limiting cuando aplique.
+* Manejo seguro de archivos.
+
+---
+
+# 25. Regla final
+
+Cuando una implementación tenga varias alternativas:
+
+Priorizar:
+
+1. Solución simple.
+2. Código mantenible.
+3. Fácil prueba.
+4. Fácil reemplazo futuro.
+
+No construir complejidad hasta que exista una necesidad real.

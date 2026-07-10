@@ -1,0 +1,53 @@
+# Entorno y secretos
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+
+# Backend — Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+*.egg-info/
+.eggs/
+dist/
+build/
+*.egg
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+*.tmp
+*.bak
+*.swp
+
+# Frontend — Node
+node_modules/
+dist/
+.vite/
+.cache/
+*.local
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+
+# IDEs y editores
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln

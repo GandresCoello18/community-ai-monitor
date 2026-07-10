@@ -1,0 +1,459 @@
+---
+description: Reglas generales de desarrollo para Community AI Monitor
+globs:
+  - "**/*"
+alwaysApply: true
+---
+
+# Community AI Monitor - Development Rules
+
+## 1. Contexto obligatorio
+
+Antes de realizar cualquier modificación, revisar:
+
+- PROJECT_CONTEXT.md
+- Reglas específicas del módulo donde se trabajará.
+
+El código generado debe respetar la arquitectura, objetivos y decisiones técnicas definidas en esos documentos.
+
+No introducir cambios arquitectónicos importantes sin explicarlos previamente.
+
+---
+
+# 2. Principios generales
+
+Todas las implementaciones deben seguir estos principios:
+
+- Simplicidad antes que complejidad.
+- Código mantenible antes que código rápido.
+- Separación clara de responsabilidades.
+- Bajo acoplamiento entre módulos.
+- Alta cohesión dentro de cada módulo.
+- Evitar sobreingeniería.
+
+No crear abstracciones innecesarias.
+
+Una solución simple y clara es preferible a una solución genérica difícil de mantener.
+
+---
+
+# 3. Uso de inteligencia artificial
+
+La IA es una herramienta de asistencia, no un reemplazo del criterio del desarrollador.
+
+Antes de generar código:
+
+- Analizar contexto existente.
+- Revisar archivos relacionados.
+- Entender dependencias actuales.
+
+Nunca asumir que una implementación nueva es correcta sin revisar el código existente.
+
+---
+
+# 4. Cambios de código
+
+Antes de modificar archivos existentes:
+
+1. Explicar qué archivos serán afectados.
+2. Explicar la razón del cambio.
+3. Identificar posibles impactos.
+
+Evitar modificaciones masivas cuando una solución localizada es suficiente.
+
+---
+
+# 5. Backend Python
+
+Cuando se trabaje en backend:
+
+## Framework
+
+Utilizar:
+
+- FastAPI.
+
+## Estilo
+
+Seguir:
+
+- Python 3.12+
+- Type hints obligatorios.
+- Código async cuando aplique.
+- PEP8.
+- Código limpio.
+
+Ejemplo esperado:
+
+```python
+async def get_camera(camera_id: UUID) -> Camera:
+    ...
+````
+
+Evitar:
+
+```python
+def get_camera(id):
+    ...
+```
+
+---
+
+# 6. Estructura backend
+
+Mantener separación:
+
+```
+app/
+
+├── api/
+│   Endpoint definitions
+
+├── services/
+│   Business logic
+
+├── repositories/
+│   Database access
+
+├── models/
+│   Database entities
+
+├── schemas/
+│   API contracts
+
+├── core/
+│   Configuration and shared utilities
+
+├── detection/
+│   Computer vision logic
+
+├── events/
+│   Event processing
+
+└── llm/
+    Language model integration
+```
+
+Los endpoints NO deben contener lógica de negocio.
+
+Incorrecto:
+
+```python
+@app.post("/events")
+async def create_event():
+    save_database()
+    send_notification()
+    generate_summary()
+```
+
+Correcto:
+
+```python
+@app.post("/events")
+async def create_event(
+    service: EventService
+):
+    return await service.create()
+```
+
+---
+
+# 7. Base de datos
+
+Utilizar:
+
+* PostgreSQL.
+* SQLAlchemy 2.0.
+* Alembic para migraciones.
+
+Reglas:
+
+* Nunca ejecutar SQL directamente dentro de endpoints.
+* Usar repositorios para acceso a datos.
+* Los modelos de base de datos no deben exponerse directamente en la API.
+
+Separar:
+
+Database Model:
+
+```python
+CameraModel
+```
+
+API Schema:
+
+```python
+CameraResponse
+```
+
+---
+
+# 8. Validación de datos
+
+Utilizar:
+
+* Pydantic.
+
+Toda entrada externa debe ser validada.
+
+Ejemplo:
+
+```python
+class CameraCreate(BaseModel):
+    name: str
+    location: str
+```
+
+No aceptar diccionarios sin validar.
+
+---
+
+# 9. Manejo de errores
+
+No utilizar:
+
+```python
+except Exception:
+    pass
+```
+
+Los errores deben:
+
+* Registrarse.
+* Tener contexto.
+* Devolver respuestas apropiadas.
+
+Utilizar:
+
+* Excepciones personalizadas.
+* Exception handlers de FastAPI.
+
+---
+
+# 10. Logging
+
+No utilizar:
+
+```python
+print()
+```
+
+Utilizar:
+
+```python
+logger.info()
+logger.warning()
+logger.error()
+```
+
+Los logs deben permitir entender:
+
+* Qué ocurrió.
+* Cuándo ocurrió.
+* En qué módulo ocurrió.
+
+---
+
+# 11. Variables de configuración
+
+Nunca colocar:
+
+* claves API,
+* URLs,
+* secretos,
+* parámetros dinámicos,
+
+directamente en código.
+
+Utilizar:
+
+* variables de entorno.
+* archivos de configuración.
+
+Ejemplo:
+
+Correcto:
+
+```python
+settings.llm_model
+```
+
+Incorrecto:
+
+```python
+MODEL="llama"
+```
+
+---
+
+# 12. Inteligencia artificial y modelos
+
+Separar completamente:
+
+* detección,
+* tracking,
+* reglas,
+* LLM.
+
+El LLM no debe recibir frames directamente.
+
+Flujo obligatorio:
+
+```
+Video
+
+↓
+
+Computer Vision
+
+↓
+
+Structured Events
+
+↓
+
+LLM
+```
+
+---
+
+# 13. Procesamiento de video
+
+Los módulos de visión deben:
+
+* Ser independientes.
+* Poder cambiar de modelo.
+* No depender del frontend.
+
+Ejemplo:
+
+Correcto:
+
+```
+DetectionService
+    |
+    └── YOLOAdapter
+```
+
+Incorrecto:
+
+```
+CameraController
+    |
+    └── YOLO code mezclado
+```
+
+---
+
+# 14. Dependencias
+
+Antes de agregar una librería:
+
+Evaluar:
+
+* ¿Es necesaria?
+* ¿Tiene mantenimiento activo?
+* ¿Existe una alternativa estándar?
+
+No agregar paquetes solamente por comodidad.
+
+---
+
+# 15. Testing
+
+Todo módulo crítico debe tener pruebas.
+
+Prioridad:
+
+1. Servicios.
+2. Reglas de eventos.
+3. Procesamiento de datos.
+4. Endpoints críticos.
+
+Utilizar:
+
+* pytest.
+
+---
+
+# 16. Frontend
+
+Cuando se trabaje en frontend:
+
+Mantener:
+
+* React.
+* Componentes reutilizables.
+* Separación lógica/UI.
+* TypeScript obligatorio.
+
+Evitar:
+
+* lógica de negocio dentro de componentes.
+* componentes gigantes.
+
+---
+
+# 17. Comunicación Backend / Frontend
+
+Toda comunicación debe utilizar:
+
+* contratos claros.
+* DTOs.
+* tipos definidos.
+
+Evitar dependencias implícitas.
+
+---
+
+# 18. Seguridad
+
+Siempre considerar:
+
+* Validación de entradas.
+* Manejo correcto de permisos.
+* Protección de secretos.
+* Sanitización de datos.
+
+No almacenar información sensible innecesaria.
+
+---
+
+# 19. Documentación
+
+Cuando se agregue una funcionalidad importante:
+
+Actualizar:
+
+* README correspondiente.
+* Documentación técnica.
+* Variables de configuración.
+
+El código debe explicar el "cómo".
+
+La documentación debe explicar el "por qué".
+
+---
+
+# 20. Antes de finalizar cualquier tarea
+
+Verificar:
+
+* ¿El código compila?
+* ¿Los tipos son correctos?
+* ¿Existen errores evidentes?
+* ¿Se respetó la arquitectura?
+* ¿Se agregaron pruebas si era necesario?
+
+Nunca entregar código incompleto sin indicarlo claramente.
+
+```
+
+---
+
+Una recomendación adicional: yo agregaría después **dos reglas más específicas**:
+
+```
+
+.cursor/rules/backend-python.mdc
+.cursor/rules/frontend-react.mdc

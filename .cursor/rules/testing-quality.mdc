@@ -1,0 +1,510 @@
+---
+description: Reglas de testing, calidad de código, revisión y validación del desarrollo
+globs:
+  - "backend/**/*.py"
+  - "frontend/**/*"
+  - "tests/**/*"
+alwaysApply: true
+---
+
+# Testing and Code Quality Rules
+
+## 1. Objetivo
+
+El proyecto Community AI Monitor utiliza inteligencia artificial como herramienta de desarrollo.
+
+La generación automática de código debe estar acompañada de validación mediante:
+
+- pruebas automatizadas,
+- revisión técnica,
+- análisis de impacto,
+- criterios de calidad.
+
+El código generado por IA no debe considerarse correcto hasta ser validado.
+
+---
+
+# 2. Principio fundamental
+
+Antes de implementar:
+
+Entender el problema.
+
+Durante la implementación:
+
+Mantener arquitectura existente.
+
+Después de implementar:
+
+Validar comportamiento.
+
+Nunca aceptar código únicamente porque compila.
+
+---
+
+# 3. Calidad antes que velocidad
+
+Priorizar:
+
+1. Correctitud.
+2. Mantenibilidad.
+3. Claridad.
+4. Seguridad.
+5. Performance.
+
+Evitar:
+
+- soluciones temporales sin documentar,
+- duplicación de código,
+- lógica difícil de entender,
+- abstracciones innecesarias.
+
+---
+
+# 4. Testing obligatorio
+
+Toda funcionalidad nueva debe evaluar si requiere pruebas.
+
+Especialmente:
+
+- reglas de negocio,
+- servicios,
+- procesamiento de eventos,
+- repositorios,
+- endpoints críticos.
+
+---
+
+# 5. Tipos de pruebas
+
+Utilizar diferentes niveles.
+
+## Unit Tests
+
+Para:
+
+- funciones puras,
+- reglas,
+- transformaciones,
+- validaciones.
+
+Ejemplo:
+
+```
+
+Detection
+
+↓
+
+Event Rule
+
+↓
+
+Expected Event
+
+```
+
+---
+
+## Integration Tests
+
+Para:
+
+- API.
+- Base de datos.
+- Servicios internos.
+
+Ejemplo:
+
+```
+
+HTTP Request
+
+↓
+
+Service
+
+↓
+
+Database
+
+↓
+
+Response
+
+```
+
+---
+
+## End-to-End Tests
+
+Para flujos críticos.
+
+Ejemplo:
+
+```
+
+Camera Event
+
+↓
+
+Detection
+
+↓
+
+Stored Event
+
+↓
+
+Frontend Notification
+
+```
+
+---
+
+# 6. Frameworks
+
+Backend:
+
+Utilizar:
+
+- pytest.
+- pytest-asyncio.
+
+Frontend:
+
+Utilizar:
+
+- Vitest.
+- React Testing Library.
+
+No introducir frameworks adicionales sin necesidad.
+
+---
+
+# 7. Cobertura
+
+No perseguir cobertura artificial.
+
+La prioridad es probar:
+
+- lógica crítica,
+- casos límite,
+- errores esperados.
+
+Una prueba útil vale más que muchas pruebas superficiales.
+
+---
+
+# 8. Tests de inteligencia artificial
+
+No depender de modelos reales en pruebas automáticas.
+
+Incorrecto:
+
+```
+
+Test
+
+↓
+
+Descargar YOLO
+
+↓
+
+Procesar cámara real
+
+```
+
+Correcto:
+
+```
+
+Test
+
+↓
+
+Mock Detection Result
+
+↓
+
+Validar Event Engine
+
+````
+
+---
+
+# 9. Mocking
+
+Utilizar mocks para:
+
+- cámaras,
+- modelos IA,
+- LLM,
+- servicios externos.
+
+Ejemplo:
+
+Simular:
+
+```json
+{
+"class":"person",
+"confidence":0.91
+}
+````
+
+en lugar de ejecutar el modelo completo.
+
+---
+
+# 10. Validación de eventos
+
+Las reglas de negocio deben tener pruebas independientes.
+
+Ejemplo:
+
+Regla:
+
+```
+Objeto abandonado
+```
+
+Casos:
+
+Debe crear evento:
+
+```
+Objeto sin interacción > 10 minutos
+```
+
+No debe crear evento:
+
+```
+Objeto detectado durante 30 segundos
+```
+
+---
+
+# 11. Manejo de casos límite
+
+Toda implementación debe considerar:
+
+* datos vacíos,
+* valores inválidos,
+* errores externos,
+* pérdida de conexión,
+* duplicación de eventos.
+
+---
+
+# 12. Calidad del código Python
+
+Todo código Python debe:
+
+* utilizar type hints,
+* tener nombres descriptivos,
+* evitar funciones gigantes,
+* seguir PEP8.
+
+Preferir:
+
+```python
+def calculate_event_duration(
+    started_at: datetime,
+    ended_at: datetime
+) -> int:
+    ...
+```
+
+Evitar:
+
+```python
+def calc(a,b):
+    ...
+```
+
+---
+
+# 13. Complejidad
+
+Evitar:
+
+* funciones con demasiadas responsabilidades,
+* condicionales anidados excesivos,
+* clases gigantes.
+
+Si una función supera aproximadamente 30-50 líneas:
+
+Evaluar si debe dividirse.
+
+---
+
+# 14. Revisión antes de entregar código
+
+Antes de finalizar una tarea revisar:
+
+## Arquitectura
+
+* ¿Respeta módulos existentes?
+* ¿Mantiene separación de responsabilidades?
+
+## Seguridad
+
+* ¿Expone información sensible?
+* ¿Valida entradas?
+
+## Datos
+
+* ¿Modifica modelos correctamente?
+* ¿Necesita migración?
+
+## Performance
+
+* ¿Bloquea procesos?
+* ¿Hace consultas innecesarias?
+
+---
+
+# 15. Cambios grandes
+
+Para cambios que afecten múltiples módulos:
+
+Primero presentar:
+
+```
+Problema
+
+↓
+
+Propuesta
+
+↓
+
+Archivos afectados
+
+↓
+
+Riesgos
+
+↓
+
+Implementación
+```
+
+No realizar cambios estructurales grandes automáticamente.
+
+---
+
+# 16. Refactoring
+
+No refactorizar código existente sin motivo.
+
+Un refactor debe tener objetivo:
+
+* mejorar legibilidad,
+* eliminar duplicación,
+* corregir diseño,
+* mejorar rendimiento.
+
+Evitar cambiar código estable únicamente por preferencia personal.
+
+---
+
+# 17. Documentación
+
+Toda funcionalidad importante debe documentarse.
+
+Documentar:
+
+* decisiones técnicas,
+* comportamiento esperado,
+* configuraciones necesarias.
+
+No documentar obviedades.
+
+---
+
+# 18. Revisiones de seguridad
+
+Antes de aprobar cambios revisar:
+
+* secretos expuestos,
+* validación insuficiente,
+* permisos incorrectos,
+* datos sensibles almacenados.
+
+---
+
+# 19. Git y cambios
+
+Los cambios deben ser pequeños y claros.
+
+Preferir commits con propósito único.
+
+Ejemplo:
+
+Correcto:
+
+```
+Add abandoned object event detection
+```
+
+Incorrecto:
+
+```
+Update files
+```
+
+---
+
+# 20. Código generado por IA
+
+Cuando Cursor genere código:
+
+Debe explicar:
+
+* qué cambió,
+* por qué,
+* posibles riesgos.
+
+No generar grandes cantidades de código sin contexto.
+
+---
+
+# 21. Definition of Done
+
+Una tarea se considera terminada cuando:
+
+* Funcionalidad implementada.
+* Código revisado.
+* Pruebas agregadas cuando corresponda.
+* Errores manejados.
+* Documentación actualizada.
+* Arquitectura respetada.
+
+---
+
+# 22. Regla final
+
+La IA acelera la construcción.
+
+El desarrollador mantiene la responsabilidad técnica.
+
+Todo código debe pasar por:
+
+```
+Generación
+
+↓
+
+Revisión
+
+↓
+
+Prueba
+
+↓
+
+Aceptación humana
+```

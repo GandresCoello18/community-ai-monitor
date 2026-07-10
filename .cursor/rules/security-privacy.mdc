@@ -1,0 +1,539 @@
+---
+description: Reglas de seguridad, privacidad y uso responsable de IA para Community AI Monitor
+globs:
+  - "backend/**/*.py"
+  - "frontend/**/*"
+  - "docker/**/*"
+  - "**/*.yaml"
+  - "**/*.yml"
+alwaysApply: true
+---
+
+# Security and Privacy Rules
+
+## 1. Contexto
+
+Community AI Monitor procesa información proveniente de cámaras y sensores visuales.
+
+El sistema debe diseñarse bajo principios de:
+
+- privacidad por diseño,
+- mínima recopilación de datos,
+- seguridad por defecto,
+- transparencia.
+
+El objetivo del sistema es analizar eventos y patrones, no identificar individuos.
+
+---
+
+# 2. Principio de privacidad por defecto
+
+Antes de implementar una funcionalidad preguntar:
+
+- ¿Es necesario almacenar este dato?
+- ¿Aporta valor real al sistema?
+- ¿Existe una alternativa menos invasiva?
+
+Si un dato no es necesario:
+
+No debe almacenarse.
+
+---
+
+# 3. Reconocimiento facial
+
+El sistema NO debe implementar:
+
+- reconocimiento facial,
+- identificación biométrica,
+- creación de perfiles individuales,
+- comparación de rostros.
+
+No almacenar:
+
+- imágenes faciales,
+- embeddings faciales,
+- identificadores biométricos.
+
+---
+
+# 4. Seguimiento de objetos
+
+El tracking permitido es únicamente temporal y técnico.
+
+Ejemplo permitido:
+
+```
+
+Objeto detectado:
+
+ID temporal:
+25
+
+Duración:
+120 segundos
+
+Movimiento:
+Entrada → salida
+
+```
+
+No permitido:
+
+```
+
+Persona identificada:
+
+Nombre:
+Juan Pérez
+
+Historial:
+Últimos 30 días
+
+````
+
+Los IDs de tracking deben desaparecer después del contexto necesario.
+
+---
+
+# 5. Datos visuales
+
+Evitar almacenar frames completos por defecto.
+
+Preferir almacenar:
+
+- eventos,
+- metadata,
+- timestamps,
+- coordenadas,
+- estadísticas.
+
+Ejemplo:
+
+Correcto:
+
+```json
+{
+"type":"crowd_detected",
+"people_count":15,
+"time":"2026-07-10T15:30:00Z"
+}
+````
+
+Evitar:
+
+```json
+{
+"image":"full_camera_frame.jpg"
+}
+```
+
+sin una justificación clara.
+
+---
+
+# 6. Capturas e imágenes
+
+Si se requiere almacenar imágenes:
+
+Debe existir:
+
+* propósito definido,
+* tiempo de retención,
+* control de acceso.
+
+Nunca almacenar imágenes indefinidamente.
+
+---
+
+# 7. Datos sensibles
+
+Nunca almacenar directamente:
+
+* nombres de personas detectadas,
+* información personal,
+* identificadores personales,
+* ubicaciones personales innecesarias.
+
+El sistema debe trabajar con:
+
+* eventos,
+* zonas,
+* cámaras,
+* estadísticas.
+
+---
+
+# 8. Ubicación
+
+Las ubicaciones de cámaras deben manejarse cuidadosamente.
+
+Evitar exponer públicamente:
+
+* coordenadas exactas,
+* información interna de infraestructura,
+* detalles sensibles.
+
+Separar:
+
+Información pública:
+
+```
+Parque Central
+```
+
+Información privada:
+
+```
+Latitud:
+xxxx
+
+Longitud:
+xxxx
+```
+
+---
+
+# 9. Seguridad de APIs
+
+Todas las APIs deben considerar:
+
+* autenticación,
+* autorización,
+* validación de entrada,
+* protección contra abuso.
+
+Nunca crear endpoints administrativos sin protección.
+
+---
+
+# 10. Secretos y credenciales
+
+Nunca almacenar:
+
+* API keys,
+* tokens,
+* contraseñas,
+* credenciales de cámaras.
+
+Incorrecto:
+
+```python
+API_KEY="xxxxx"
+```
+
+Correcto:
+
+```python
+settings.api_key
+```
+
+Utilizar:
+
+* variables de entorno,
+* secret managers.
+
+---
+
+# 11. Logs
+
+Los logs nunca deben contener:
+
+* tokens,
+* contraseñas,
+* información personal,
+* imágenes.
+
+Ejemplo incorrecto:
+
+```text
+User token: abc123
+```
+
+Correcto:
+
+```text
+Authentication failed for user request
+```
+
+---
+
+# 12. Control de acceso
+
+Los recursos deben protegerse según permisos.
+
+Ejemplos:
+
+Usuarios comunes:
+
+* consultar estadísticas.
+
+Administradores:
+
+* configurar cámaras.
+* modificar reglas.
+
+Superadministradores:
+
+* gestionar sistema.
+
+---
+
+# 13. Validación de entrada
+
+Toda información externa debe validarse.
+
+Fuentes:
+
+* API REST.
+* WebSockets.
+* Configuración.
+* Archivos.
+* Integraciones externas.
+
+Nunca confiar en datos recibidos.
+
+---
+
+# 14. Protección de infraestructura
+
+No exponer directamente:
+
+* cámaras internas,
+* streams privados,
+* servicios internos.
+
+Utilizar:
+
+* autenticación,
+* redes privadas,
+* permisos adecuados.
+
+---
+
+# 15. Procesamiento externo de IA
+
+Cuando se utilicen servicios externos:
+
+Antes de enviar información:
+
+Evaluar:
+
+* qué datos se envían,
+* si contienen información sensible,
+* si pueden anonimizarse.
+
+Preferir enviar:
+
+```json
+{
+"events":[
+ {
+ "type":"crowd",
+ "count":20
+ }
+]
+}
+```
+
+No enviar:
+
+* imágenes completas,
+* videos completos,
+* datos personales.
+
+---
+
+# 16. LLM y privacidad
+
+Los modelos de lenguaje deben recibir únicamente el contexto necesario.
+
+Correcto:
+
+```
+Evento:
+Objeto abandonado durante 15 minutos
+```
+
+Incorrecto:
+
+```
+Video completo de una persona durante una hora
+```
+
+---
+
+# 17. Retención de datos
+
+Los datos deben tener ciclos de vida definidos.
+
+Ejemplo:
+
+Detecciones:
+
+* corto plazo.
+
+Eventos:
+
+* mayor duración.
+
+Estadísticas:
+
+* largo plazo.
+
+No guardar todo indefinidamente.
+
+---
+
+# 18. Auditoría
+
+Registrar acciones importantes:
+
+Ejemplos:
+
+* modificación de configuración,
+* cambio de reglas,
+* acceso administrativo.
+
+Debe existir trazabilidad.
+
+---
+
+# 19. Seguridad en desarrollo
+
+Nunca:
+
+* desactivar validaciones para facilitar pruebas,
+* incluir credenciales temporales,
+* subir secretos al repositorio.
+
+Utilizar:
+
+* archivos .env ignorados,
+* configuraciones separadas.
+
+---
+
+# 20. Dependencias
+
+Antes de agregar librerías:
+
+Evaluar:
+
+* seguridad conocida,
+* mantenimiento,
+* licencia,
+* origen.
+
+Evitar dependencias abandonadas.
+
+---
+
+# 21. Manejo de errores
+
+Los errores expuestos al usuario no deben revelar:
+
+* estructura interna,
+* rutas del servidor,
+* consultas SQL,
+* secretos.
+
+Incorrecto:
+
+```json
+{
+"error":"SQL connection password xxx failed"
+}
+```
+
+Correcto:
+
+```json
+{
+"error":{
+ "code":"DATABASE_ERROR"
+}
+}
+```
+
+---
+
+# 22. Principio de mínimo privilegio
+
+Cada componente debe tener únicamente los permisos necesarios.
+
+Ejemplo:
+
+El servicio de detección:
+
+Necesita:
+
+* leer stream.
+
+No necesita:
+
+* administrar usuarios.
+
+---
+
+# 23. IA responsable
+
+Los modelos de IA pueden equivocarse.
+
+El sistema debe:
+
+* mostrar confianza,
+* permitir revisión humana,
+* evitar decisiones automáticas críticas.
+
+Ejemplo:
+
+Correcto:
+
+```
+Posible objeto abandonado detectado
+```
+
+Incorrecto:
+
+```
+Persona peligrosa detectada
+```
+
+---
+
+# 24. Revisión antes de implementar funcionalidades nuevas
+
+Antes de agregar capacidades relacionadas con personas:
+
+Evaluar:
+
+* impacto de privacidad,
+* necesidad real,
+* alternativas menos invasivas.
+
+---
+
+# 25. Regla final
+
+Community AI Monitor debe ser un sistema de análisis comunitario, no un sistema de vigilancia invasiva.
+
+La prioridad es:
+
+```
+Utilidad
+
++
+
+Privacidad
+
++
+
+Seguridad
+
++
+
+Transparencia
+```
+
+Toda implementación debe respetar estos principios.

@@ -1,0 +1,117 @@
+---
+description: Reglas para visión por computadora, detección, tracking y pipeline de video
+globs:
+  - "backend/app/detection/**/*.py"
+  - "backend/app/tracking/**/*.py"
+  - "backend/app/**/camera*.py"
+  - "backend/app/**/video*.py"
+alwaysApply: true
+---
+
+# Computer Vision Rules
+
+## 1. Contexto
+
+El pipeline de visión convierte frames de video en detecciones estructuradas.
+
+El LLM no procesa video directamente. El flujo obligatorio es:
+
+```
+Video → Computer Vision → Structured Events → LLM
+```
+
+---
+
+# 2. Separación de responsabilidades
+
+Mantener módulos independientes:
+
+| Módulo | Responsabilidad |
+|--------|-----------------|
+| Captura | Obtener frames, administrar streams |
+| Detección | Ejecutar modelo, detectar objetos |
+| Tracking | Mantener identidad temporal de objetos |
+
+No mezclar detección con reglas de negocio ni con endpoints HTTP.
+
+---
+
+# 3. Stack previsto
+
+- OpenCV — captura y procesamiento de frames.
+- YOLO — detección de objetos (modelo inicial).
+- ByteTrack o BoT-SORT — tracking temporal.
+
+Los modelos deben ser intercambiables mediante adaptadores.
+
+---
+
+# 4. Estructura esperada
+
+```
+backend/app/
+
+├── detection/
+│   ├── base.py
+│   ├── yolo.py
+│   └── factory.py
+│
+└── tracking/
+    ├── base.py
+    └── byte_track.py
+```
+
+---
+
+# 5. Procesamiento asíncrono
+
+La inferencia de modelos NO debe ejecutarse dentro de requests HTTP.
+
+Correcto:
+
+```
+Camera Worker → Detection Pipeline → Database → API
+```
+
+Incorrecto:
+
+```
+FastAPI Request → YOLO Inference → Response
+```
+
+---
+
+# 6. Clases detectables
+
+Prioridad inicial:
+
+- Personas.
+- Vehículos.
+- Bicicletas.
+- Animales.
+- Objetos genéricos.
+
+---
+
+# 7. Privacidad
+
+- No implementar reconocimiento facial.
+- No almacenar frames crudos innecesariamente.
+- Usar IDs temporales de tracking, no identidades persistentes.
+- Persistir detecciones estructuradas, no imágenes completas.
+
+---
+
+# 8. Configuración
+
+Parámetros como nivel de confianza, modelo activo y clases detectables deben estar en configuración externa (variables de entorno o archivos de config), no hardcodeados.
+
+---
+
+# 9. Testing
+
+Priorizar pruebas de:
+
+- Adaptadores de detección (con mocks).
+- Pipeline de tracking.
+- Transformación de detecciones a formato estructurado.

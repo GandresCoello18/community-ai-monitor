@@ -1,0 +1,541 @@
+---
+description: Reglas específicas para PostgreSQL, SQLAlchemy, modelos de datos y persistencia
+globs:
+  - "backend/**/*.py"
+  - "backend/alembic/**/*.py"
+alwaysApply: true
+---
+
+# Database and Persistence Rules
+
+## 1. Contexto de base de datos
+
+La base de datos es una pieza fundamental del sistema Community AI Monitor.
+
+Su responsabilidad es almacenar:
+
+- configuración del sistema,
+- cámaras,
+- detecciones,
+- tracking temporal,
+- eventos,
+- alertas,
+- estadísticas,
+- resúmenes generados por IA.
+
+La base de datos debe permitir responder preguntas históricas como:
+
+- ¿Qué ocurrió en una cámara determinada?
+- ¿Cuántos eventos ocurrieron esta semana?
+- ¿Cuáles son los patrones normales?
+- ¿Qué anomalías fueron detectadas?
+
+---
+
+# 2. Tecnología obligatoria
+
+Utilizar:
+
+- PostgreSQL.
+- SQLAlchemy 2.0.
+- Alembic.
+- Pydantic v2.
+
+No utilizar ORMs alternativos sin justificación.
+
+---
+
+# 3. Separación de modelos
+
+Mantener separación estricta entre:
+
+## Database Models
+
+Representan tablas.
+
+Ubicación:
+
+```
+
+models/
+
+````
+
+Ejemplo:
+
+```python
+class Camera(Base):
+    __tablename__ = "cameras"
+````
+
+---
+
+## API Schemas
+
+Representan contratos HTTP.
+
+Ubicación:
+
+```
+schemas/
+```
+
+Ejemplo:
+
+```python
+class CameraResponse(BaseModel):
+    id: UUID
+    name: str
+```
+
+---
+
+Nunca retornar directamente modelos SQLAlchemy desde endpoints.
+
+---
+
+# 4. Diseño de entidades
+
+Diseñar entidades pensando en:
+
+* crecimiento futuro,
+* múltiples cámaras,
+* múltiples comunidades,
+* análisis histórico.
+
+Evitar modelos excesivamente simples que obliguen a migraciones frecuentes.
+
+---
+
+# 5. Entidades principales
+
+La arquitectura inicial debe considerar entidades similares a:
+
+```
+Community
+
+Camera
+
+CameraConfiguration
+
+Detection
+
+TrackedObject
+
+Event
+
+EventRule
+
+Alert
+
+DailySummary
+```
+
+Estas entidades pueden evolucionar.
+
+---
+
+# 6. Identificadores
+
+Usar UUID como identificadores principales.
+
+Preferir:
+
+```python
+id: UUID
+```
+
+sobre:
+
+```python
+id: int
+```
+
+Razón:
+
+* mejor distribución,
+* menor exposición,
+* preparación para arquitectura distribuida.
+
+---
+
+# 7. Fechas y tiempos
+
+Toda entidad histórica debe incluir timestamps.
+
+Usar:
+
+```python
+created_at
+updated_at
+```
+
+Para eventos:
+
+```python
+occurred_at
+started_at
+ended_at
+```
+
+---
+
+Siempre almacenar fechas en UTC.
+
+Nunca depender del timezone del servidor.
+
+---
+
+# 8. Modelado de eventos
+
+Los eventos son una entidad central.
+
+No almacenar eventos como texto libre únicamente.
+
+Incorrecto:
+
+```
+event_description:
+"Persona sospechosa"
+```
+
+Correcto:
+
+```json
+{
+"type":"long_presence",
+"severity":"medium",
+"metadata":{
+    "duration_seconds":1800
+}
+}
+```
+
+---
+
+# 9. Metadata dinámica
+
+Para información variable utilizar JSONB.
+
+Ejemplo:
+
+Tabla:
+
+```
+events
+```
+
+Campo:
+
+```
+metadata JSONB
+```
+
+Ejemplo:
+
+```json
+{
+"people_count":15,
+"confidence":0.89,
+"zone":"park_entry"
+}
+```
+
+No crear columnas nuevas para cada variación menor.
+
+---
+
+# 10. Detecciones
+
+Una detección representa una observación puntual.
+
+Ejemplo:
+
+```
+Frame 10:30:01
+
+Objeto:
+person
+
+Confidence:
+0.91
+```
+
+Debe almacenar:
+
+* cámara origen,
+* timestamp,
+* clase,
+* confianza,
+* bounding box,
+* metadata adicional.
+
+---
+
+# 11. Tracking
+
+El tracking debe ser separado de detecciones.
+
+Una persona detectada en múltiples frames puede pertenecer al mismo track.
+
+Ejemplo:
+
+```
+Detection
+
+|
+
+belongs to
+
+|
+
+TrackedObject
+```
+
+No duplicar información innecesariamente.
+
+---
+
+# 12. Relaciones
+
+Definir relaciones explícitas.
+
+Ejemplo:
+
+```
+Camera
+
+1:N
+
+Detection
+
+
+Camera
+
+1:N
+
+Event
+```
+
+Usar correctamente:
+
+* foreign keys,
+* índices,
+* constraints.
+
+---
+
+# 13. Índices
+
+Crear índices para consultas frecuentes.
+
+Especialmente:
+
+* timestamps,
+* camera_id,
+* event_type,
+* severity.
+
+Ejemplo:
+
+```python
+Index(
+    "idx_events_created_at",
+    Event.created_at
+)
+```
+
+---
+
+# 14. Consultas
+
+Las consultas complejas deben vivir en repositories.
+
+Ejemplo:
+
+Correcto:
+
+```
+EventRepository.get_events_by_period()
+```
+
+Incorrecto:
+
+```
+endpoint:
+select(...)
+join(...)
+filter(...)
+```
+
+---
+
+# 15. Transacciones
+
+Las operaciones que modifican múltiples entidades deben utilizar transacciones.
+
+Ejemplo:
+
+Crear evento:
+
+```
+Insert Event
+
+↓
+
+Create Alert
+
+↓
+
+Create Notification
+```
+
+Debe ser una operación consistente.
+
+---
+
+# 16. Migraciones
+
+Todo cambio estructural debe utilizar Alembic.
+
+Flujo:
+
+```
+Modificar Model
+
+↓
+
+Crear Migration
+
+↓
+
+Revisar Migration
+
+↓
+
+Aplicar Migration
+```
+
+Nunca modificar producción manualmente.
+
+---
+
+# 17. Soft Delete
+
+Para información histórica importante preferir soft delete.
+
+Ejemplo:
+
+```python
+deleted_at
+```
+
+Evitar eliminar físicamente:
+
+* eventos,
+* auditorías,
+* registros históricos.
+
+---
+
+# 18. Auditoría
+
+Cuando una entidad sea crítica considerar guardar:
+
+* quién realizó cambios,
+* cuándo,
+* qué cambió.
+
+Especialmente:
+
+* configuraciones,
+* reglas,
+* cámaras.
+
+---
+
+# 19. Configuraciones dinámicas
+
+Los parámetros que pueden cambiar deben almacenarse como configuración.
+
+Ejemplos:
+
+* sensibilidad de detección,
+* horarios,
+* límites de eventos.
+
+No almacenar estos valores directamente en código.
+
+---
+
+# 20. Datos analíticos
+
+Diseñar pensando en futuras métricas:
+
+Ejemplos:
+
+* cantidad de personas por hora,
+* tráfico vehicular,
+* eventos por cámara,
+* tendencias semanales.
+
+La estructura debe permitir agregaciones.
+
+---
+
+# 21. Performance
+
+Evitar:
+
+* consultas N+1,
+* cargar relaciones innecesarias,
+* traer grandes cantidades de datos sin paginación.
+
+Utilizar:
+
+* paginación,
+* filtros,
+* límites.
+
+---
+
+# 22. Seguridad
+
+Nunca almacenar:
+
+* secretos,
+* tokens,
+* claves privadas.
+
+Utilizar:
+
+* variables de entorno,
+* gestores de secretos.
+
+---
+
+# 23. Testing de persistencia
+
+Los tests deben validar:
+
+* creación de entidades,
+* relaciones,
+* reglas de negocio,
+* consultas importantes.
+
+Utilizar base de datos de prueba independiente.
+
+---
+
+# 24. Regla final
+
+La base de datos debe ser diseñada como un sistema de memoria histórica.
+
+No almacenar únicamente el estado actual.
+
+Guardar suficiente contexto para poder analizar:
+
+* qué ocurrió,
+* cuándo ocurrió,
+* dónde ocurrió,
+* cómo evolucionó.

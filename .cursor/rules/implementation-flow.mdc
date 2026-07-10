@@ -1,0 +1,344 @@
+---
+description: Control de flujo de implementación basado en fases del proyecto
+globs:
+  - "**/*"
+alwaysApply: true
+---
+
+# Implementation Flow Rules
+
+## 1. Propósito
+
+Este proyecto debe desarrollarse siguiendo el orden definido en:
+
+```
+
+IMPLEMENTATION_PLAN.md
+
+```
+
+Cursor debe utilizar este documento como fuente principal para conocer:
+
+- qué fase está activa,
+- qué tareas corresponden,
+- qué funcionalidades todavía no deben implementarse.
+
+---
+
+# 2. Regla principal
+
+No implementar funcionalidades pertenecientes a fases futuras si la fase actual no está completada.
+
+Ejemplo:
+
+Si el proyecto está en:
+
+```
+
+FASE 2 - Backend Base
+
+```
+
+No implementar:
+
+- YOLO.
+- Tracking.
+- WebSockets.
+- Dashboard frontend.
+
+hasta que las fases anteriores sean completadas.
+
+---
+
+# 3. Antes de comenzar cualquier tarea
+
+Antes de generar código:
+
+Realizar internamente:
+
+1. Leer `PROJECT_CONTEXT.md`.
+2. Leer `IMPLEMENTATION_PLAN.md`.
+3. Revisar reglas aplicables en `.cursor/rules`.
+4. Identificar la fase actual.
+5. Confirmar que la tarea pertenece a dicha fase.
+
+---
+
+# 4. Comunicación antes de cambios importantes
+
+Para cambios grandes, explicar:
+
+```
+
+Fase actual:
+
+Objetivo:
+
+Archivos afectados:
+
+Cambios propuestos:
+
+Dependencias:
+
+Riesgos:
+
+```
+
+No realizar cambios arquitectónicos grandes sin explicación previa.
+
+---
+
+# 5. Ejecución incremental
+
+Las implementaciones deben realizarse en pasos pequeños.
+
+Preferir:
+
+```
+
+Crear estructura
+
+↓
+
+Implementar módulo
+
+↓
+
+Agregar pruebas
+
+↓
+
+Validar
+
+↓
+
+Continuar
+
+```
+
+Evitar:
+
+```
+
+Crear toda la aplicación completa en una sola respuesta.
+
+```
+
+---
+
+# 6. Validación entre fases
+
+Antes de marcar una fase como completada verificar:
+
+## Código
+
+- Compila correctamente.
+- Sigue arquitectura definida.
+- No rompe funcionalidades existentes.
+
+## Pruebas
+
+- Tests creados cuando corresponda.
+- Casos principales cubiertos.
+
+## Documentación
+
+- Cambios documentados.
+- Variables nuevas registradas.
+
+---
+
+# 7. Actualización del plan
+
+Cuando una tarea sea completada:
+
+Actualizar:
+
+```
+
+IMPLEMENTATION_PLAN.md
+
+````
+
+Marcando:
+
+```md
+- [x] Tarea completada
+````
+
+No modificar el objetivo de una fase sin justificación.
+
+---
+
+# 8. Dependencias entre fases
+
+Respetar estas dependencias:
+
+```
+Infraestructura
+
+↓
+
+Backend Base
+
+↓
+
+Database
+
+↓
+
+Video Pipeline
+
+↓
+
+Computer Vision
+
+↓
+
+Event Engine
+
+↓
+
+LLM
+
+↓
+
+API
+
+↓
+
+Frontend
+```
+
+No crear dependencias hacia módulos inexistentes.
+
+---
+
+# 9. No adelantar diseño innecesario
+
+No implementar anticipadamente:
+
+* autenticación compleja,
+* microservicios,
+* Kubernetes,
+* arquitectura distribuida,
+* optimizaciones prematuras.
+
+Solo agregar complejidad cuando exista una necesidad real.
+
+---
+
+# 10. Decisiones técnicas
+
+Cuando existan varias alternativas:
+
+Priorizar:
+
+1. La opción más simple.
+2. La opción más mantenible.
+3. La opción compatible con la arquitectura actual.
+4. La opción con menor costo operativo.
+
+---
+
+# 11. Código generado automáticamente
+
+Cuando se genere código:
+
+Debe incluir:
+
+* ubicación correcta.
+* propósito del módulo.
+* dependencias utilizadas.
+* integración con arquitectura existente.
+
+No crear archivos sin explicar su responsabilidad.
+
+---
+
+# 12. Nuevas ideas o mejoras
+
+Si durante la implementación aparece una nueva funcionalidad:
+
+No implementarla inmediatamente.
+
+Registrar:
+
+```
+Future Improvement
+```
+
+o solicitar confirmación.
+
+Ejemplo:
+
+Durante FASE 5 aparece una idea de reconocimiento avanzado.
+
+No implementarlo.
+
+Documentarlo para una fase futura.
+
+---
+
+# 13. Manejo de bloqueos
+
+Si una tarea no puede completarse porque falta una dependencia:
+
+No crear soluciones temporales desordenadas.
+
+Indicar:
+
+```
+Bloqueado por:
+
+Dependencia faltante:
+
+Acción recomendada:
+```
+
+---
+
+# 14. Prioridad del MVP
+
+Todas las decisiones deben favorecer llegar al MVP:
+
+```
+Cámara
+
+↓
+
+Detección
+
+↓
+
+Evento
+
+↓
+
+Historial
+
+↓
+
+Resumen IA
+
+↓
+
+Dashboard
+```
+
+Las funcionalidades secundarias no deben retrasar el flujo principal.
+
+---
+
+# 15. Regla final
+
+Cursor debe actuar como un ingeniero dentro de un equipo de desarrollo.
+
+Debe:
+
+* seguir el plan,
+* respetar arquitectura,
+* justificar cambios importantes,
+* avanzar fase por fase.
+
+No debe actuar como un generador libre de código.
