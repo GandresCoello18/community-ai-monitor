@@ -15,6 +15,20 @@ class PaginatedResponse[T](BaseModel):
     meta: PaginationMeta
 
 
+class CameraCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=120, examples=["Camera Entrada"])
+    location: str = Field(
+        min_length=1,
+        max_length=255,
+        examples=["Parque Central - Entrada Norte"],
+    )
+    stream_url: str | None = Field(
+        default=None,
+        examples=["rtsp://user:pass@192.168.1.50:554/stream1", "webcam://0"],
+    )
+    is_active: bool = True
+
+
 class CameraResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

@@ -4,6 +4,7 @@ from uuid import UUID
 
 from app.capture.base import FrameSource
 from app.capture.opencv_sources import VideoFileFrameSource, WebcamFrameSource
+from app.capture.rtsp import RTSPFrameSource
 from app.capture.synthetic import SyntheticFrameSource
 from app.core.config import Settings
 
@@ -35,12 +36,17 @@ def create_frame_source(
     if url.startswith("rtsp://demo") or url == "" or url.startswith("synthetic://"):
         return SyntheticFrameSource(camera_id)
 
-    if url.startswith("rtsp://"):
-        logger.warning(
-            "RTSP source not supported in FASE 4, using synthetic fallback: %s",
+    if url.startswith(("rtsp://", "rtsps://")):
+        return RTSPFrameSource(
+            camera_id,
             url,
+            transport=settings.rtsp_transport,
+            buffer_size=settings.rtsp_buffer_size,
+            reconnect_delay_seconds=settings.rtsp_reconnect_delay_seconds,
+            read_failures_before_reconnect=settings.rtsp_read_failures_before_reconnect,
+            warmup_seconds=settings.rtsp_warmup_seconds,
+            transport_fallback=settings.rtsp_transport_fallback,
         )
-        return SyntheticFrameSource(camera_id)
 
     path = Path(url)
     if path.is_file():

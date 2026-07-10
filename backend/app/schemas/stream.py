@@ -13,6 +13,9 @@ class StreamStatusData(BaseModel):
     frames_processed: int
     fps_target: float
     last_frame_at: datetime | None
+    detection_enabled: bool = False
+    detections_processed: int = 0
+    last_detection_at: datetime | None = None
     error_message: str | None = None
 
 

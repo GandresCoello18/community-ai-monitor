@@ -11,6 +11,7 @@ from app.core.logging import setup_logging
 from app.database.seed import seed_demo_data
 from app.database.session import dispose_engine, get_session_factory
 from app.services.camera_stream_service import CameraStreamService
+from app.websocket.manager import WebSocketManager
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         setup_logging(app_settings)
         logger.info("Starting %s [%s]", app_settings.app_name, app_settings.app_env)
 
-        stream_service = CameraStreamService(app_settings)
+        ws_manager = WebSocketManager(app_settings)
+        app.state.ws_manager = ws_manager
+
+        stream_service = CameraStreamService(app_settings, ws_manager=ws_manager)
         app.state.camera_stream_service = stream_service
 
         if app_settings.seed_demo_data and app_settings.is_development:

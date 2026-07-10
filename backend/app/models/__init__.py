@@ -95,4 +95,25 @@ class Configuration(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
-__all__ = ["Camera", "Configuration", "Detection", "Event"]
+class DailySummary(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+    __tablename__ = "daily_summaries"
+    __table_args__ = (
+        Index("idx_daily_summaries_period_start", "period_start"),
+    )
+
+    period_start: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+    )
+    period_end: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+    )
+    summary_text: Mapped[str] = mapped_column(Text, nullable=False)
+    total_events: Mapped[int] = mapped_column(nullable=False, default=0)
+    llm_provider: Mapped[str] = mapped_column(String(64), nullable=False)
+    llm_model: Mapped[str] = mapped_column(String(120), nullable=False)
+    metadata_: Mapped[dict | None] = mapped_column("metadata", JSONType, nullable=True)
+
+
+__all__ = ["Camera", "Configuration", "DailySummary", "Detection", "Event"]

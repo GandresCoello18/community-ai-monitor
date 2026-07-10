@@ -6,8 +6,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import Settings, get_settings
 from app.database.session import get_db_session
 from app.services.camera_service import CameraService
+from app.services.detection_service import DetectionService
 from app.services.event_service import EventService
 from app.services.health_service import HealthService
+from app.services.summary_service import SummaryService
 
 SettingsDep = Annotated[Settings, Depends(get_settings)]
 
@@ -38,9 +40,25 @@ def get_event_service(
     return EventService(session, settings)
 
 
+def get_detection_service(
+    session: SessionDep,
+    settings: SettingsDep,
+) -> DetectionService:
+    return DetectionService(session, settings)
+
+
+def get_summary_service(
+    session: SessionDep,
+    settings: SettingsDep,
+) -> SummaryService:
+    return SummaryService(session, settings)
+
+
 HealthServiceDep = Annotated[HealthService, Depends(get_health_service)]
 CameraServiceDep = Annotated[CameraService, Depends(get_camera_service)]
 EventServiceDep = Annotated[EventService, Depends(get_event_service)]
+DetectionServiceDep = Annotated[DetectionService, Depends(get_detection_service)]
+SummaryServiceDep = Annotated[SummaryService, Depends(get_summary_service)]
 
 
 def pagination_params(

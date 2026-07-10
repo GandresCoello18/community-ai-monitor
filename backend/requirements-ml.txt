@@ -1,0 +1,11 @@
+# Dependencias de Computer Vision (FASE 5) — opcionales y pesadas (arrastran torch).
+# NO se instalan en la imagen Docker por defecto para mantenerla liviana.
+#
+# Instalar SOLO cuando quieras ejecutar detección real con YOLO
+# (por ejemplo, para probar con la webcam en local):
+#
+#   pip install -r requirements.txt -r requirements-ml.txt
+#
+# Si no se instala, la detección se desactiva de forma segura (NullDetector).
+
+ultralytics>=8.3.0,<9.0.0

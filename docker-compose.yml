@@ -43,6 +43,15 @@ services:
       CAMERA_SIMULATOR_ENABLED: ${CAMERA_SIMULATOR_ENABLED:-true}
       CAMERA_SIMULATOR_AUTO_START: ${CAMERA_SIMULATOR_AUTO_START:-true}
       CAMERA_SIMULATOR_FPS: ${CAMERA_SIMULATOR_FPS:-2}
+      # Detección desactivada por defecto en Docker: la imagen no incluye YOLO
+      # (torch) y las cámaras sintéticas no producen píxeles. Para detección
+      # real usa la webcam en local (ver README, FASE 5).
+      DETECTION_ENABLED: ${DETECTION_ENABLED:-false}
+      # Ollama corre en el host (no en Docker); host.docker.internal lo alcanza
+      # desde el contenedor en Windows/Mac.
+      LLM_BASE_URL: ${LLM_BASE_URL:-http://host.docker.internal:11434}
+      LLM_MODEL: ${LLM_MODEL:-llama3.2:3b}
+      RTSP_TRANSPORT: ${RTSP_TRANSPORT:-tcp}
       DATABASE_URL: postgresql://${POSTGRES_USER:-cam_user}:${POSTGRES_PASSWORD:-cam_dev_password}@database:5432/${POSTGRES_DB:-community_ai_monitor}
     ports:
       - "${BACKEND_PORT:-8000}:8000"

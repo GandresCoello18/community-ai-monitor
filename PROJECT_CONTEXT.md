@@ -487,11 +487,11 @@ Posibles extensiones:
 
 Fase actual:
 
-FASE 4 — Simulador de cámara (completada).
+FASE 11 — Cámaras reales RTSP (completada).
 
-Siguiente fase:
+Siguiente fase (diferida):
 
-FASE 5 — Computer Vision Pipeline (YOLO + tracking).
+FASE 10 — Frontend (React dashboard).
 
 Prioridad de implementación (ver `IMPLEMENTATION_PLAN.md`):
 

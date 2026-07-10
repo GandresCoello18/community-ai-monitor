@@ -47,6 +47,7 @@ class VideoFileFrameSource:
             captured_at=datetime.now(UTC),
             width=width,
             height=height,
+            image=image,
         )
 
     def release(self) -> None:
@@ -82,6 +83,7 @@ class WebcamFrameSource:
             captured_at=datetime.now(UTC),
             width=width,
             height=height,
+            image=image,
         )
 
     def release(self) -> None:

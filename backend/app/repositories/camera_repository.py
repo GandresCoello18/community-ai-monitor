@@ -10,6 +10,9 @@ class CameraRepository:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
+    def add(self, camera: Camera) -> None:
+        self._session.add(camera)
+
     async def count_active(self) -> int:
         stmt = (
             select(func.count()).select_from(Camera).where(Camera.deleted_at.is_(None))

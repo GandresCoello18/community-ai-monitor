@@ -269,6 +269,28 @@ Person
 Confidence 0.91
 ```
 
+## Checklist
+
+- [x] Módulo `detection/` con adaptadores intercambiables (`ObjectDetector`).
+- [x] `YOLODetector` (Ultralytics) con carga perezosa de la dependencia.
+- [x] `NullDetector` para degradar de forma segura sin YOLO instalado.
+- [x] Módulo `tracking/` con `ObjectTracker` e `IoUTracker` (IDs temporales).
+- [x] `DetectionPipeline`: detección → tracking (sin acceso a DB ni reglas).
+- [x] `Frame.image` en memoria para el pipeline (nunca se persiste).
+- [x] Worker ejecuta inferencia fuera del event loop (`asyncio.to_thread`),
+      con intervalo configurable (`DETECTION_INTERVAL_SECONDS`).
+- [x] Persistencia de detecciones vía `DetectionRepository` (track_id en metadata).
+- [x] API `GET /api/v1/detections` (paginada, filtro `camera_id`).
+- [x] Estado de stream incluye `detection_enabled`, `detections_processed`.
+- [x] Dependencias ML separadas (`requirements-ml.txt`); Docker liviano.
+- [x] Tests con mocks (tracker, pipeline, worker, endpoint). Sin modelo real.
+
+**Nota técnica:** el tracker inicial es `IoUTracker` (simple, sin dependencias
+pesadas y suficiente para baja tasa de FPS). La interfaz `ObjectTracker` permite
+cambiar a ByteTrack/BoT-SORT más adelante sin tocar el pipeline.
+
+**Estado: COMPLETADA.**
+
 ---
 
 # Fase 6 — Motor de eventos
@@ -313,6 +335,22 @@ No movement
 Time exceeded
 ```
 
+## Checklist
+
+- [x] Módulo `events/` con `EventEngine` y contrato `EventRule`.
+- [x] Regla `crowd_detection` (person count > X, con cooldown).
+- [x] Regla `high_density` (aglomeración por área ocupada en frame).
+- [x] Regla `long_presence` (permanencia > X segundos por track).
+- [x] Regla `abandoned_object` (objeto estático > X segundos).
+- [x] Reglas independientes en `events/rules/` (sin lógica en endpoints).
+- [x] `EventIngestionService`: evalúa reglas y persiste eventos.
+- [x] Integración post-detección en `CameraStreamService` (Detection → Rules → Event).
+- [x] Configuración por variables de entorno (umbrales, cooldown, clases).
+- [x] API existente `GET /api/v1/events` consume eventos generados.
+- [x] Tests unitarios por regla + integración de persistencia.
+
+**Estado: COMPLETADA.**
+
 ---
 
 # Fase 7 — LLM
@@ -352,6 +390,26 @@ Salida:
 Durante la tarde hubo mayor concentración de personas...
 ```
 
+## Checklist
+
+- [x] Módulo `llm/` con proveedor intercambiable (`LLMProvider`).
+- [x] `OllamaProvider` (modelos abiertos locales, sin API key).
+- [x] Prompts en `llm/prompts.py` (resumen en español, sin datos personales).
+- [x] Contexto estructurado (`SummaryContext`): solo eventos agregados, nunca frames.
+- [x] Modelo `DailySummary` + migración `002_daily_summaries`.
+- [x] `SummaryRepository` + `SummaryService` (eventos → prompt → LLM → DB).
+- [x] API: `GET /api/v1/summaries`, `POST /api/v1/summaries/generate`.
+- [x] Configuración por entorno (`LLM_PROVIDER`, `LLM_BASE_URL`, `LLM_MODEL`).
+- [x] Tests con provider mock (sin depender de Ollama real).
+- [x] Verificado con Ollama real (`llama3.2:3b` en CPU).
+
+**Nota técnica:** proveedor por defecto Ollama en `http://localhost:11434`.
+Desde Docker se alcanza con `http://host.docker.internal:11434`. Si Ollama no
+está disponible, el endpoint responde `503 LLM_PROVIDER_ERROR` sin afectar el
+resto del sistema.
+
+**Estado: COMPLETADA.**
+
 ---
 
 # Fase 8 — API pública
@@ -378,6 +436,19 @@ Resumen:
 GET /summaries
 ```
 
+## Checklist
+
+- [x] `GET /api/v1/cameras` — listado paginado (ya existía).
+- [x] `POST /api/v1/cameras` — crear cámara (`CameraCreate`, status 201).
+- [x] `GET /api/v1/events` — listado paginado con filtros (`camera_id`, `event_type`, fechas).
+- [x] `GET /api/v1/events/statistics` — agregados por tipo, severidad y cámara.
+- [x] `GET /api/v1/summaries` — listado de resúmenes IA (FASE 7).
+- [x] DTOs Pydantic separados (`CameraCreate`, `EventStatisticsResponse`).
+- [x] Lógica en servicios/repositorios (endpoints delgados).
+- [x] Tests de API para creación de cámaras y estadísticas.
+
+**Estado: COMPLETADA.**
+
 ---
 
 # Fase 9 — Tiempo real
@@ -403,6 +474,19 @@ WebSocket
 
 Frontend
 ```
+
+## Checklist
+
+- [x] Módulo `websocket/` con `WebSocketManager` y contrato de mensajes.
+- [x] Envelope estándar: `{ event, timestamp, data }` (`entity.action`).
+- [x] Endpoint `WS /api/v1/ws/events` con rooms por cámara o dashboard.
+- [x] Broadcast `event.created` al persistir eventos (FASE 6 → FASE 9).
+- [x] Rooms: `dashboard:global` y `camera:{uuid}` (sin enviar todo a todos).
+- [x] Mensaje `connection.established` al conectar.
+- [x] Config `WEBSOCKET_ENABLED` para desactivar broadcast.
+- [x] Tests de manager, schemas y endpoint WebSocket.
+
+**Estado: COMPLETADA.**
 
 ---
 
@@ -431,6 +515,20 @@ Integrar:
 * Streams reales.
 
 Porque si empiezas aquí, los problemas de red/hardware mezclan problemas de software.
+
+## Checklist
+
+- [x] `RTSPFrameSource` con OpenCV + FFmpeg (`rtsp://`, `rtsps://`).
+- [x] Reconexión automática tras fallos de lectura consecutivos.
+- [x] Transporte configurable (`RTSP_TRANSPORT=tcp` recomendado en prod).
+- [x] Buffer mínimo (`RTSP_BUFFER_SIZE=1`) para baja latencia.
+- [x] Credenciales enmascaradas en logs y respuestas API (`mask_stream_url`).
+- [x] `rtsp://demo/...` sigue usando fuente sintética (desarrollo).
+- [x] Factory actualizado; ya no hay fallback sintético para RTSP real.
+- [x] Docker: `ffmpeg` en imagen backend para decodificar RTSP.
+- [x] Tests con mocks (factory, reconexión, enmascaramiento API).
+
+**Estado: COMPLETADA.**
 
 ---
 

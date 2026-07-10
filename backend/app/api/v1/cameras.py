@@ -6,7 +6,7 @@ from app.api.deps import CameraServiceDep, SessionDep, SettingsDep, pagination_p
 from app.core.config import Settings
 from app.core.exceptions import AppException, NotFoundError
 from app.repositories.camera_repository import CameraRepository
-from app.schemas.camera import CameraResponse, PaginatedResponse
+from app.schemas.camera import CameraCreate, CameraResponse, PaginatedResponse
 from app.schemas.common import ApiResponse
 from app.schemas.stream import StreamStatusData
 from app.services.camera_stream_service import (
@@ -36,6 +36,20 @@ async def list_cameras(
 ) -> PaginatedResponse[CameraResponse]:
     page, limit = pagination
     return await service.list_cameras(page=page, limit=limit)
+
+
+@router.post(
+    "",
+    response_model=ApiResponse[CameraResponse],
+    response_model_exclude_none=True,
+    status_code=201,
+    summary="Create a camera",
+)
+async def create_camera(
+    payload: CameraCreate,
+    service: CameraServiceDep,
+) -> ApiResponse[CameraResponse]:
+    return await service.create_camera(payload)
 
 
 @router.get(
