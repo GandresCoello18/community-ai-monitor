@@ -46,7 +46,9 @@ ehthumbs.db
 
 # IDEs y editores
 .idea/
-.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 *.suo
 *.ntvs*
 *.njsproj

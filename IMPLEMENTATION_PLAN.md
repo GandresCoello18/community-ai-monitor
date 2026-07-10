@@ -87,7 +87,7 @@ Progreso:
 - [x] `pgadmin` disponible como servicio opcional (profile `tools`).
 - [x] Variables de entorno definidas en `.env.example`.
 - [x] PostgreSQL verificado funcionando (`docker compose up -d`).
-- [ ] API funcionando — depende del esqueleto FastAPI (Fase 2).
+- [x] API funcionando — `GET /api/v1/health` responde correctamente.
 - [ ] Migraciones funcionando — depende de Alembic (Fase 3).
 
 Nota: los criterios "API funcionando" y "Migraciones funcionando" no pueden
@@ -129,12 +129,27 @@ Implementar:
 Ejemplo:
 
 ```
-GET /health
+GET /api/v1/health
 
 {
- "status":"ok"
+  "data": {
+    "status": "ok"
+  }
 }
 ```
+
+Progreso:
+
+- [x] Estructura `backend/app` con capas separadas.
+- [x] FastAPI con factory `create_app()` y lifespan.
+- [x] Configuración con Pydantic Settings (`app/core/config.py`).
+- [x] Logging estructurado (`app/core/logging.py`).
+- [x] Excepciones personalizadas y handlers globales.
+- [x] Health check en `GET /api/v1/health` vía servicio.
+- [x] Dockerfile y servicio `backend` en Docker Compose.
+- [x] Tests con pytest + httpx.
+
+**Estado: COMPLETADA.**
 
 ---
 

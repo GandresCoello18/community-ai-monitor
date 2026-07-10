@@ -39,21 +39,51 @@ community-ai-monitor/
 
 ## Estado del proyecto
 
-**Fase actual:** FASE 1 — Infraestructura local (completada). Siguiente: FASE 2 — Backend base.
+**Fase actual:** FASE 2 — Backend base (completada). Siguiente: FASE 3 — Base de datos.
 
 ## Infraestructura local
 
 Requisitos: Docker Desktop.
 
 ```bash
-# Levantar PostgreSQL
+# Levantar PostgreSQL + backend API
 docker compose up -d
+
+# Health check
+curl http://localhost:8000/api/v1/health
+
+# Documentación API (solo en desarrollo)
+# http://localhost:8000/docs
 
 # Incluir pgAdmin (opcional, http://localhost:5050)
 docker compose --profile tools up -d
 
 # Detener servicios
 docker compose down
+```
+
+## Desarrollo backend (sin Docker)
+
+```bash
+cd backend
+python -m venv .venv
+# Windows: .venv\Scripts\activate
+pip install -r requirements-dev.txt
+
+# Servidor
+uvicorn app.main:app --reload --port 8000
+
+# Calidad de código (Ruff ≈ ESLint + Prettier en Python)
+ruff check .
+ruff format .
+
+# Tests
+pytest
+
+# Hooks de Git (una vez, desde la raíz del monorepo)
+cd ..
+pre-commit install
+pre-commit run --all-files
 ```
 
 Las variables de entorno se documentan en `.env.example`. Para personalizarlas, copiar ese archivo a `.env` (ignorado por Git).

@@ -1,0 +1,19 @@
+# Pre-commit hooks — verificación automática antes de cada commit.
+# Instalación (una vez, desde backend/):
+#   pip install -r requirements-dev.txt
+#   pre-commit install
+#
+# Ejecución manual en todo el repo:
+#   pre-commit run --all-files
+
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.12
+    hooks:
+      - id: ruff
+        name: ruff lint (backend)
+        args: [--fix]
+        files: ^backend/
+      - id: ruff-format
+        name: ruff format (backend)
+        files: ^backend/

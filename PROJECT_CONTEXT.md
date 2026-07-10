@@ -487,11 +487,11 @@ Posibles extensiones:
 
 Fase actual:
 
-FASE 1 — Infraestructura local (completada: Docker + PostgreSQL).
+FASE 2 — Backend base (completada).
 
 Siguiente fase:
 
-FASE 2 — Backend base (esqueleto FastAPI).
+FASE 3 — Base de datos y modelos iniciales (PostgreSQL, SQLAlchemy, Alembic).
 
 Prioridad de implementación (ver `IMPLEMENTATION_PLAN.md`):
 

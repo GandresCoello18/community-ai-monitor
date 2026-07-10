@@ -1,8 +1,8 @@
 # Community AI Monitor — Docker Compose
-# FASE 1: Infraestructura local.
+# FASE 1–2: Infraestructura local + backend FastAPI.
 #
 # Uso:
-#   docker compose up -d                    → levanta PostgreSQL
+#   docker compose up -d                    → PostgreSQL + backend
 #   docker compose --profile tools up -d    → incluye pgAdmin
 #
 # Las credenciales por defecto son SOLO para desarrollo local.
@@ -29,6 +29,23 @@ services:
       timeout: 5s
       retries: 5
 
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cam-backend
+    restart: unless-stopped
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      DEBUG: ${DEBUG:-true}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-cam_user}:${POSTGRES_PASSWORD:-cam_dev_password}@database:5432/${POSTGRES_DB:-community_ai_monitor}
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      database:
+        condition: service_healthy
+
   # pgAdmin es opcional: activar con --profile tools
   pgadmin:
     image: dpage/pgadmin4:latest
@@ -45,9 +62,6 @@ services:
       database:
         condition: service_healthy
 
-  # backend (Python / FastAPI): se activará en FASE 2,
-  # cuando exista el esqueleto de la aplicación en backend/app.
-  #
   # redis: opcional, se agregará cuando exista una necesidad real
   # (colas / workers en fases posteriores).
 
