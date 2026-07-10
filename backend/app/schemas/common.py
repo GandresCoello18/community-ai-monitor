@@ -12,6 +12,7 @@ class ErrorResponse(BaseModel):
 
 class HealthData(BaseModel):
     status: str = Field(examples=["ok"])
+    database: str = Field(examples=["connected"])
 
 
 class ApiResponse[T](BaseModel):

@@ -88,7 +88,7 @@ Progreso:
 - [x] Variables de entorno definidas en `.env.example`.
 - [x] PostgreSQL verificado funcionando (`docker compose up -d`).
 - [x] API funcionando — `GET /api/v1/health` responde correctamente.
-- [ ] Migraciones funcionando — depende de Alembic (Fase 3).
+- [x] Migraciones funcionando — Alembic en Docker y `alembic upgrade head`.
 
 Nota: los criterios "API funcionando" y "Migraciones funcionando" no pueden
 cumplirse en esta fase sin adelantar trabajo de las Fases 2 y 3. La
@@ -175,6 +175,20 @@ Configuration
 
 Todavía con datos simulados.
 
+Progreso:
+
+- [x] SQLAlchemy 2.0 async con `asyncpg`.
+- [x] Modelos con UUID, timestamps, JSONB y soft delete en cámaras.
+- [x] Alembic con migración inicial (`001_initial_schema`).
+- [x] Repositorios para acceso a datos.
+- [x] Seed de datos simulados (cámaras, eventos, detecciones, configuración).
+- [x] Health check con estado de base de datos.
+- [x] Endpoints read-only: `GET /api/v1/cameras`, `GET /api/v1/events`.
+- [x] Migraciones automáticas en Docker (`entrypoint.sh`).
+- [x] Tests con SQLite en memoria + datos simulados.
+
+**Estado: COMPLETADA.**
+
 ---
 
 # Fase 4 — Simulador de cámara
@@ -199,6 +213,19 @@ Puede usar:
 Objetivo:
 
 Probar el pipeline sin depender de hardware.
+
+Progreso:
+
+- [x] Módulo `capture/` con adaptadores intercambiables (`FrameSource`).
+- [x] Fuentes: `synthetic`, `file` (MP4), `webcam`.
+- [x] Worker asyncio en background (`CameraSimulatorWorker`).
+- [x] `CameraStreamService` para orquestar simuladores por cámara.
+- [x] Auto-inicio en desarrollo para cámaras activas.
+- [x] API de estado: `GET /cameras/{id}/stream/status`, `GET /streams/status`.
+- [x] Control manual en desarrollo: `POST .../stream/start|stop`.
+- [x] OpenCV headless integrado (sin almacenar frames en DB).
+
+**Estado: COMPLETADA.**
 
 ---
 

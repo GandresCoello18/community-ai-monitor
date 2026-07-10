@@ -487,11 +487,11 @@ Posibles extensiones:
 
 Fase actual:
 
-FASE 2 — Backend base (completada).
+FASE 4 — Simulador de cámara (completada).
 
 Siguiente fase:
 
-FASE 3 — Base de datos y modelos iniciales (PostgreSQL, SQLAlchemy, Alembic).
+FASE 5 — Computer Vision Pipeline (YOLO + tracking).
 
 Prioridad de implementación (ver `IMPLEMENTATION_PLAN.md`):
 

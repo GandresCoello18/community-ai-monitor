@@ -39,7 +39,41 @@ community-ai-monitor/
 
 ## Estado del proyecto
 
-**Fase actual:** FASE 2 — Backend base (completada). Siguiente: FASE 3 — Base de datos.
+**Fase actual:** FASE 4 — Simulador de cámara (completada). Siguiente: FASE 5 — Computer Vision.
+
+## Probar el backend (ahora)
+
+Con Docker levantado, puedes explorar la API y el simulador de cámaras:
+
+| Endpoint | Descripción |
+|----------|-------------|
+| `GET /api/v1/health` | Estado de API y base de datos |
+| `GET /api/v1/cameras` | Listado de cámaras (paginado) |
+| `GET /api/v1/cameras/{id}/stream/status` | Estado del simulador de frames |
+| `GET /api/v1/streams/status` | Todos los simuladores activos |
+| `POST /api/v1/cameras/{id}/stream/start` | Iniciar simulador (solo desarrollo) |
+| `GET /api/v1/events` | Eventos simulados en DB |
+| `GET /docs` | Documentación interactiva |
+
+```bash
+docker compose up -d --build
+
+# Ver simuladores activos (auto-inician en desarrollo)
+curl http://localhost:8000/api/v1/streams/status
+
+# Estado de una cámara
+curl http://localhost:8000/api/v1/cameras/{camera_id}/stream/status
+```
+
+**Fuentes de video soportadas en FASE 4:**
+
+| `stream_url` | Fuente |
+|--------------|--------|
+| `rtsp://demo/...` | Sintética (sin hardware) |
+| `file:///ruta/video.mp4` | Archivo local |
+| `webcam://0` | Webcam local |
+
+**Qué aún NO está disponible:** detección YOLO, motor de eventos real, LLM, WebSockets ni frontend.
 
 ## Infraestructura local
 
@@ -70,7 +104,8 @@ python -m venv .venv
 # Windows: .venv\Scripts\activate
 pip install -r requirements-dev.txt
 
-# Servidor
+# Servidor (requiere migraciones previas)
+alembic upgrade head
 uvicorn app.main:app --reload --port 8000
 
 # Calidad de código (Ruff ≈ ESLint + Prettier en Python)

@@ -39,6 +39,10 @@ services:
       APP_ENV: ${APP_ENV:-development}
       DEBUG: ${DEBUG:-true}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      SEED_DEMO_DATA: ${SEED_DEMO_DATA:-true}
+      CAMERA_SIMULATOR_ENABLED: ${CAMERA_SIMULATOR_ENABLED:-true}
+      CAMERA_SIMULATOR_AUTO_START: ${CAMERA_SIMULATOR_AUTO_START:-true}
+      CAMERA_SIMULATOR_FPS: ${CAMERA_SIMULATOR_FPS:-2}
       DATABASE_URL: postgresql://${POSTGRES_USER:-cam_user}:${POSTGRES_PASSWORD:-cam_dev_password}@database:5432/${POSTGRES_DB:-community_ai_monitor}
     ports:
       - "${BACKEND_PORT:-8000}:8000"
