@@ -89,3 +89,67 @@ class WebcamFrameSource:
     def release(self) -> None:
         if self._capture is not None:
             self._capture.release()
+
+
+class HttpMjpegFrameSource:
+    """Reads MJPEG frames from an HTTP URL (IP Webcam /video, etc.)."""
+
+    source_type = "http_mjpeg"
+
+    def __init__(
+        self,
+        camera_id: UUID,
+        http_url: str,
+        *,
+        buffer_size: int = 1,
+        output_max_width: int = 640,
+    ) -> None:
+        self._camera_id = camera_id
+        self._http_url = http_url
+        self._output_max_width = output_max_width
+        self._capture = cv2.VideoCapture(http_url)
+        self._frame_number = 0
+        self._closed = False
+
+        if not self._capture.isOpened():
+            msg = f"Unable to open MJPEG stream: {http_url}"
+            raise RuntimeError(msg)
+
+        self._capture.set(cv2.CAP_PROP_BUFFERSIZE, buffer_size)
+
+    def read(self) -> Frame | None:
+        if self._closed:
+            return None
+
+        success, image = self._capture.read()
+        if not success or image is None:
+            return None
+
+        height, width = image.shape[:2]
+        if self._output_max_width > 0 and width > self._output_max_width:
+            scale = self._output_max_width / width
+            new_height = max(2, int(height * scale))
+            image = cv2.resize(
+                image,
+                (self._output_max_width, new_height),
+                interpolation=cv2.INTER_AREA,
+            )
+            height, width = image.shape[:2]
+
+        self._frame_number += 1
+        return Frame(
+            camera_id=self._camera_id,
+            frame_number=self._frame_number,
+            captured_at=datetime.now(UTC),
+            width=width,
+            height=height,
+            image=image,
+        )
+
+    def release(self) -> None:
+        if self._closed:
+            return
+        self._closed = True
+        if self._capture is not None:
+            self._capture.release()
+            self._capture = None

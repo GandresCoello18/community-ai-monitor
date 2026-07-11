@@ -1,6 +1,7 @@
 import logging
 import os
 import shutil
+import subprocess
 import time
 from datetime import UTC, datetime
 from uuid import UUID
@@ -21,9 +22,8 @@ logger = logging.getLogger(__name__)
 class RTSPFrameSource:
     """Reads frames from an IP camera RTSP stream (FASE 11).
 
-    Tries OpenCV first (with warmup and transport fallback). If OpenCV opens
-    the stream but cannot read frames — common with IP Webcam on Windows —
-    falls back to an ffmpeg subprocess pipe when ffmpeg is available.
+    Tries OpenCV or ffmpeg depending on configuration. ffmpeg-first is useful
+    on Windows where OpenCV RTSP timeouts can block startup for ~30 seconds.
     """
 
     source_type = "rtsp"
@@ -39,6 +39,10 @@ class RTSPFrameSource:
         read_failures_before_reconnect: int = 3,
         warmup_seconds: float = 10.0,
         transport_fallback: bool = True,
+        probe_timeout_seconds: float = 8.0,
+        use_ffmpeg_first: bool = False,
+        ffmpeg_output_max_width: int = 640,
+        ffmpeg_read_timeout_seconds: float = 15.0,
     ) -> None:
         self._camera_id = camera_id
         self._rtsp_url = rtsp_url
@@ -49,47 +53,49 @@ class RTSPFrameSource:
         self._failures_before_reconnect = read_failures_before_reconnect
         self._warmup_seconds = warmup_seconds
         self._transport_fallback = transport_fallback
+        self._probe_timeout_seconds = probe_timeout_seconds
+        self._use_ffmpeg_first = use_ffmpeg_first
+        self._ffmpeg_output_max_width = ffmpeg_output_max_width
+        self._ffmpeg_read_timeout_seconds = ffmpeg_read_timeout_seconds
         self._frame_number = 0
         self._consecutive_failures = 0
         self._capture: cv2.VideoCapture | None = None
+        self._last_connection_attempt_at: float | None = None
         self._last_reconnect_at: float = 0.0
         self._ffmpeg_reader: FfmpegRtspReader | None = None
         self._backend: str = "opencv"
-        self._connect_attempted = False
+        self._closed = False
 
     def read(self) -> Frame | None:
+        if self._closed:
+            return None
+
+        if self._ffmpeg_reader is not None:
+            frame = self._ffmpeg_reader.read()
+            if frame is None:
+                self._consecutive_failures += 1
+                if (
+                    self._consecutive_failures >= self._failures_before_reconnect
+                    and self._should_retry_connection()
+                ):
+                    self._reconnect()
+            else:
+                self._consecutive_failures = 0
+            return frame
+
+        if not self._should_retry_connection():
+            return None
+
+        self._attempt_connection()
         if self._ffmpeg_reader is not None:
             return self._ffmpeg_reader.read()
-
-        if not self._connect_attempted:
-            self._connect_attempted = True
-            if not self._open_capture():
-                self._try_ffmpeg_fallback()
-            if self._ffmpeg_reader is not None:
-                return self._ffmpeg_reader.read()
-
         if self._capture is None or not self._capture.isOpened():
-            if not self._open_capture():
-                self._try_ffmpeg_fallback()
-            if self._ffmpeg_reader is not None:
-                return self._ffmpeg_reader.read()
-            if self._capture is None or not self._capture.isOpened():
-                return None
+            return None
 
         success, image = self._capture.read()
         if not success or image is None:
             self._consecutive_failures += 1
             if self._consecutive_failures >= self._failures_before_reconnect:
-                if self._consecutive_failures == self._failures_before_reconnect:
-                    logger.warning(
-                        "OpenCV RTSP read failing, trying ffmpeg fallback "
-                        "camera_id=%s url=%s",
-                        self._camera_id,
-                        self._safe_url,
-                    )
-                    self._try_ffmpeg_fallback()
-                    if self._ffmpeg_reader is not None:
-                        return self._ffmpeg_reader.read()
                 self._reconnect()
             return None
 
@@ -106,12 +112,37 @@ class RTSPFrameSource:
         )
 
     def release(self) -> None:
+        if self._closed:
+            return
+        self._closed = True
+
         if self._ffmpeg_reader is not None:
             self._ffmpeg_reader.release()
             self._ffmpeg_reader = None
         if self._capture is not None:
             self._capture.release()
             self._capture = None
+
+    def _should_retry_connection(self) -> bool:
+        if self._last_connection_attempt_at is None:
+            return True
+        return (time.monotonic() - self._last_connection_attempt_at) >= self._reconnect_delay
+
+    def _mark_connection_attempt(self) -> None:
+        self._last_connection_attempt_at = time.monotonic()
+
+    def _attempt_connection(self) -> None:
+        if self._closed:
+            return
+        self._mark_connection_attempt()
+
+        if self._use_ffmpeg_first:
+            self._try_ffmpeg_fallback()
+            if self._ffmpeg_reader is not None:
+                return
+
+        if not self._open_capture():
+            self._try_ffmpeg_fallback()
 
     def _transports_to_try(self) -> list[str]:
         primary = self._transport.lower()
@@ -121,11 +152,16 @@ class RTSPFrameSource:
         return [primary] if primary == alternate else [primary, alternate]
 
     def _open_capture(self) -> bool:
+        if self._closed:
+            return False
+
         if self._capture is not None:
             self._capture.release()
             self._capture = None
 
         for transport in self._transports_to_try():
+            if self._closed:
+                return False
             capture = self._create_opencv_capture(transport)
             if capture is None:
                 continue
@@ -169,15 +205,18 @@ class RTSPFrameSource:
             return None
 
         capture.set(cv2.CAP_PROP_BUFFERSIZE, self._buffer_size)
+        timeout_ms = int(self._probe_timeout_seconds * 1000)
         if hasattr(cv2, "CAP_PROP_OPEN_TIMEOUT_MSEC"):
-            capture.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 10000)
+            capture.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, timeout_ms)
         if hasattr(cv2, "CAP_PROP_READ_TIMEOUT_MSEC"):
-            capture.set(cv2.CAP_PROP_READ_TIMEOUT_MSEC, 10000)
+            capture.set(cv2.CAP_PROP_READ_TIMEOUT_MSEC, timeout_ms)
         return capture
 
     def _warmup_capture(self, capture: cv2.VideoCapture) -> bool:
         deadline = time.monotonic() + self._warmup_seconds
         while time.monotonic() < deadline:
+            if self._closed:
+                return False
             success, image = capture.read()
             if success and image is not None:
                 return True
@@ -185,6 +224,8 @@ class RTSPFrameSource:
         return False
 
     def _try_ffmpeg_fallback(self) -> None:
+        if self._closed:
+            return
         if self._ffmpeg_reader is not None:
             return
         if shutil.which("ffmpeg") is None:
@@ -200,34 +241,44 @@ class RTSPFrameSource:
             self._capture = None
 
         for transport in self._transports_to_try():
+            if self._closed:
+                return
             try:
                 reader = FfmpegRtspReader(
                     self._camera_id,
                     self._rtsp_url,
                     transport=transport,
+                    probe_timeout_seconds=self._probe_timeout_seconds,
+                    output_max_width=self._ffmpeg_output_max_width,
+                    read_timeout_seconds=self._ffmpeg_read_timeout_seconds,
                 )
-            except Exception:
-                logger.exception(
-                    "ffmpeg fallback failed camera_id=%s url=%s transport=%s",
+            except (RuntimeError, subprocess.SubprocessError, OSError) as exc:
+                logger.warning(
+                    "ffmpeg fallback failed camera_id=%s url=%s transport=%s error=%s",
                     self._camera_id,
                     self._safe_url,
                     transport,
+                    exc,
                 )
                 continue
 
-            frame = reader.read()
-            if frame is not None:
-                self._ffmpeg_reader = reader
-                self._transport = transport
-                self._backend = "ffmpeg"
-                logger.info(
-                    "RTSP using ffmpeg fallback camera_id=%s url=%s transport=%s",
-                    self._camera_id,
-                    self._safe_url,
-                    transport,
-                )
-                return
-            reader.release()
+            self._ffmpeg_reader = reader
+            self._transport = transport
+            self._backend = "ffmpeg"
+            logger.info(
+                "RTSP using ffmpeg fallback camera_id=%s url=%s transport=%s",
+                self._camera_id,
+                self._safe_url,
+                transport,
+            )
+            return
+
+        logger.warning(
+            "RTSP unavailable camera_id=%s url=%s retry_in=%ss",
+            self._camera_id,
+            self._safe_url,
+            self._reconnect_delay,
+        )
 
     def _reconnect(self) -> None:
         now = time.monotonic()
@@ -235,6 +286,7 @@ class RTSPFrameSource:
             return
 
         self._last_reconnect_at = now
+        self._last_connection_attempt_at = now
         self._consecutive_failures = 0
         logger.warning(
             "RTSP reconnecting camera_id=%s url=%s backend=%s",
@@ -242,12 +294,12 @@ class RTSPFrameSource:
             self._safe_url,
             self._backend,
         )
-        time.sleep(self._reconnect_delay)
 
         if self._ffmpeg_reader is not None:
             self._ffmpeg_reader.release()
             self._ffmpeg_reader = None
-            self._try_ffmpeg_fallback()
-            return
+        if self._capture is not None:
+            self._capture.release()
+            self._capture = None
 
-        self._open_capture()
+        self._attempt_connection()

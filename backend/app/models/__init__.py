@@ -87,6 +87,43 @@ class Event(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     camera: Mapped["Camera"] = relationship(back_populates="events")
 
 
+class CommunityMetric(Base, UUIDPrimaryKeyMixin):
+    __tablename__ = "community_metrics"
+    __table_args__ = (
+        Index("idx_community_metrics_camera_id", "camera_id"),
+        Index("idx_community_metrics_metric_type", "metric_type"),
+        Index("idx_community_metrics_bucket_start", "bucket_start"),
+        Index(
+            "uq_community_metrics_camera_type_bucket",
+            "camera_id",
+            "metric_type",
+            "bucket_start",
+            unique=True,
+        ),
+    )
+
+    camera_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("cameras.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    metric_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    bucket_start: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+    )
+    value: Mapped[float] = mapped_column(Float, nullable=False)
+    metadata_: Mapped[dict | None] = mapped_column("metadata", JSONType, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+    )
+
+
 class Configuration(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     __tablename__ = "configurations"
 
@@ -116,4 +153,4 @@ class DailySummary(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     metadata_: Mapped[dict | None] = mapped_column("metadata", JSONType, nullable=True)
 
 
-__all__ = ["Camera", "Configuration", "DailySummary", "Detection", "Event"]
+__all__ = ["Camera", "CommunityMetric", "Configuration", "DailySummary", "Detection", "Event"]

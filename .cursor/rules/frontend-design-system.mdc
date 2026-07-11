@@ -1,0 +1,464 @@
+---
+description: Design System para el frontend de Community AI Monitor
+globs:
+  - "frontend/**/*"
+alwaysApply: true
+---
+
+# Frontend Design System
+
+## 1. Objetivo
+
+El frontend debe transmitir:
+
+- Claridad.
+- Confianza.
+- Rapidez.
+- Simplicidad.
+- Profesionalismo.
+
+El usuario debe entender el estado de la comunidad en pocos segundos.
+
+La interfaz debe priorizar la información antes que la decoración.
+
+---
+
+# 2. Filosofía de diseño
+
+Inspiración:
+
+- Linear
+- Vercel
+- GitHub
+- Raycast
+- Stripe Dashboard
+
+Características:
+
+- Minimalista.
+- Mucho espacio en blanco.
+- Componentes limpios.
+- Bordes suaves.
+- Animaciones discretas.
+- Jerarquía visual clara.
+
+Evitar interfaces sobrecargadas.
+
+---
+
+# 3. Principios
+
+Cada pantalla debe responder rápidamente:
+
+- ¿Qué está pasando?
+- ¿Dónde está ocurriendo?
+- ¿Qué requiere atención?
+- ¿Qué puede hacer el usuario?
+
+Eliminar cualquier elemento que no aporte valor.
+
+---
+
+# 4. Lenguaje visual
+
+La interfaz debe sentirse:
+
+- Moderna.
+- Profesional.
+- Tecnológica.
+- Limpia.
+- Sobria.
+
+Nunca:
+
+- Infantil.
+- Recargada.
+- Llena de gradientes.
+- Saturada de colores.
+
+---
+
+# 5. Colores
+
+Utilizar una paleta reducida.
+
+Debe existir:
+
+- Color principal.
+- Color secundario.
+- Colores semánticos.
+
+Semánticos:
+
+- Success
+- Warning
+- Error
+- Info
+
+Evitar utilizar colores únicamente por decoración.
+
+Cada color debe comunicar un estado.
+
+---
+
+# 6. Fondo
+
+Priorizar fondos neutros.
+
+Preferir:
+
+- Blanco.
+- Gris muy claro.
+- Gris oscuro para modo oscuro.
+
+Evitar fondos con textura o imágenes.
+
+---
+
+# 7. Tipografía
+
+Utilizar una única familia tipográfica.
+
+Preferir:
+
+Inter
+
+Jerarquía clara:
+
+- Título
+- Subtítulo
+- Texto
+- Etiquetas
+- Ayudas
+
+No utilizar múltiples fuentes.
+
+---
+
+# 8. Espaciado
+
+Mantener ritmo visual consistente.
+
+Usar una escala uniforme.
+
+Nunca ajustar márgenes de forma arbitraria.
+
+El espacio también comunica.
+
+---
+
+# 9. Bordes
+
+Preferir radios suaves.
+
+Evitar:
+
+- esquinas extremadamente redondeadas,
+- esquinas completamente cuadradas.
+
+Todos los componentes deben compartir el mismo lenguaje.
+
+---
+
+# 10. Sombras
+
+Utilizar sombras únicamente cuando aporten jerarquía.
+
+Evitar:
+
+- sombras muy oscuras,
+- efectos flotantes exagerados.
+
+La elevación debe ser sutil.
+
+---
+
+# 11. Iconografía
+
+Utilizar una única librería.
+
+Preferencia:
+
+Lucide Icons.
+
+Los iconos complementan el texto.
+
+Nunca reemplazan completamente al texto.
+
+---
+
+# 12. Botones
+
+Los botones deben comunicar prioridad.
+
+Tipos:
+
+- Primary
+- Secondary
+- Ghost
+- Danger
+
+Debe existir consistencia en:
+
+- tamaños,
+- padding,
+- iconos,
+- estados.
+
+---
+
+# 13. Estados
+
+Todo componente interactivo debe tener:
+
+- Default
+- Hover
+- Active
+- Focus
+- Disabled
+- Loading
+
+Nunca dejar estados sin definir.
+
+---
+
+# 14. Formularios
+
+Los formularios deben ser:
+
+- simples,
+- claros,
+- cortos.
+
+Mostrar errores junto al campo correspondiente.
+
+Evitar validaciones confusas.
+
+---
+
+# 15. Tablas
+
+Las tablas deben priorizar lectura.
+
+Permitir:
+
+- ordenamiento,
+- búsqueda,
+- filtros,
+- paginación.
+
+Evitar tablas excesivamente densas.
+
+---
+
+# 16. Tarjetas
+
+Las cards deben agrupar información relacionada.
+
+Cada card debe tener:
+
+- título,
+- contenido,
+- acciones cuando corresponda.
+
+No utilizar cards únicamente por decoración.
+
+---
+
+# 17. Dashboard
+
+El dashboard debe mostrar primero la información crítica.
+
+Orden recomendado:
+
+1. Estado general.
+2. Alertas.
+3. Eventos recientes.
+4. Estadísticas.
+5. Detalles.
+
+No ocultar información importante debajo del scroll.
+
+---
+
+# 18. Gráficos
+
+Los gráficos deben responder preguntas.
+
+Evitar gráficos únicamente decorativos.
+
+Priorizar:
+
+- líneas,
+- barras,
+- áreas,
+- indicadores.
+
+Cada gráfico debe tener:
+
+- título,
+- etiquetas,
+- unidades.
+
+---
+
+# 19. Alertas
+
+Las alertas deben ser visibles sin resultar invasivas.
+
+Prioridad:
+
+Critical
+
+↓
+
+High
+
+↓
+
+Medium
+
+↓
+
+Low
+
+Cada nivel debe diferenciarse visualmente.
+
+---
+
+# 20. Navegación
+
+La navegación debe ser predecible.
+
+Evitar más de dos niveles de profundidad.
+
+El usuario nunca debe preguntarse dónde está.
+
+---
+
+# 21. Responsive
+
+Diseñar siguiendo Mobile First.
+
+Soportar:
+
+- móvil,
+- tablet,
+- escritorio.
+
+No crear una versión móvil completamente distinta.
+
+---
+
+# 22. Accesibilidad
+
+Toda interfaz debe considerar:
+
+- navegación por teclado,
+- contraste suficiente,
+- labels correctos,
+- aria cuando corresponda.
+
+No depender únicamente del color para comunicar información.
+
+---
+
+# 23. Animaciones
+
+Las animaciones deben mejorar la experiencia.
+
+Duración:
+
+Cortas.
+
+Objetivos:
+
+- transiciones,
+- feedback,
+- cambios de estado.
+
+Evitar animaciones llamativas o innecesarias.
+
+---
+
+# 24. Consistencia
+
+Antes de crear un componente nuevo preguntar:
+
+¿Existe uno similar?
+
+Si existe:
+
+Reutilizar.
+
+No duplicar componentes.
+
+---
+
+# 25. Modo oscuro
+
+Todo componente nuevo debe ser compatible con:
+
+- Light Mode.
+- Dark Mode.
+
+No agregar estilos exclusivos para un solo tema.
+
+---
+
+# 26. Componentes
+
+Los componentes deben ser:
+
+- pequeños,
+- reutilizables,
+- desacoplados.
+
+Separar:
+
+- presentación,
+- lógica,
+- datos.
+
+---
+
+# 27. UX
+
+Cada acción importante debe proporcionar feedback.
+
+Ejemplos:
+
+Guardar
+
+↓
+
+Loading
+
+↓
+
+Éxito
+
+o
+
+↓
+
+Error
+
+Nunca dejar al usuario esperando sin información.
+
+---
+
+# 28. Filosofía final
+
+La interfaz debe sentirse como una herramienta profesional.
+
+El usuario debe percibir:
+
+- rapidez,
+- estabilidad,
+- organización,
+- confianza.
+
+El diseño nunca debe competir con la información.
+
+La información siempre es la protagonista.

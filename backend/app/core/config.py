@@ -35,7 +35,7 @@ class Settings(BaseSettings):
         alias="CAMERA_SIMULATOR_ENABLED",
     )
     camera_simulator_auto_start: bool = Field(
-        default=True,
+        default=False,
         alias="CAMERA_SIMULATOR_AUTO_START",
     )
     camera_simulator_fps: float = Field(
@@ -45,6 +45,29 @@ class Settings(BaseSettings):
     camera_simulator_video_path: str | None = Field(
         default=None,
         alias="CAMERA_SIMULATOR_VIDEO_PATH",
+    )
+
+    # --- Live preview (in-memory only, not persisted) ---
+    camera_preview_enabled: bool = Field(
+        default=True,
+        alias="CAMERA_PREVIEW_ENABLED",
+    )
+    camera_preview_fps: float = Field(default=2.0, alias="CAMERA_PREVIEW_FPS")
+    camera_preview_max_width: int = Field(
+        default=640,
+        alias="CAMERA_PREVIEW_MAX_WIDTH",
+    )
+    camera_preview_jpeg_quality: int = Field(
+        default=75,
+        alias="CAMERA_PREVIEW_JPEG_QUALITY",
+    )
+    camera_preview_show_detections: bool = Field(
+        default=True,
+        alias="CAMERA_PREVIEW_SHOW_DETECTIONS",
+    )
+    camera_worker_shutdown_timeout_seconds: float = Field(
+        default=5.0,
+        alias="CAMERA_WORKER_SHUTDOWN_TIMEOUT_SECONDS",
     )
 
     # --- Computer Vision (FASE 5) ---
@@ -122,6 +145,128 @@ class Settings(BaseSettings):
         alias="EVENT_ABANDONED_CLASSES",
     )
 
+    # --- Community Rule Engine ---
+    rule_engine_enabled: bool = Field(default=True, alias="RULE_ENGINE_ENABLED")
+    rule_scene_type: str = Field(default="general", alias="RULE_SCENE_TYPE")
+    rule_emit_legacy_event_types: bool = Field(
+        default=True,
+        alias="RULE_EMIT_LEGACY_EVENT_TYPES",
+    )
+    rule_crowd_threshold: int = Field(default=15, alias="RULE_CROWD_THRESHOLD")
+    rule_person_long_stay_enabled: bool = Field(
+        default=True,
+        alias="RULE_PERSON_LONG_STAY_ENABLED",
+    )
+    rule_person_long_stay_seconds: float = Field(
+        default=1200.0,
+        alias="RULE_PERSON_LONG_STAY_SECONDS",
+    )
+    rule_person_repeated_activity_enabled: bool = Field(
+        default=True,
+        alias="RULE_PERSON_REPEATED_ACTIVITY_ENABLED",
+    )
+    rule_person_repeated_activity_window_seconds: float = Field(
+        default=1800.0,
+        alias="RULE_PERSON_REPEATED_ACTIVITY_WINDOW_SECONDS",
+    )
+    rule_person_repeated_activity_min_visits: int = Field(
+        default=3,
+        alias="RULE_PERSON_REPEATED_ACTIVITY_MIN_VISITS",
+    )
+    rule_person_repeated_activity_zone_radius: float = Field(
+        default=80.0,
+        alias="RULE_PERSON_REPEATED_ACTIVITY_ZONE_RADIUS",
+    )
+    rule_person_hidden_activity_enabled: bool = Field(
+        default=True,
+        alias="RULE_PERSON_HIDDEN_ACTIVITY_ENABLED",
+    )
+    rule_person_hidden_stay_seconds: float = Field(
+        default=900.0,
+        alias="RULE_PERSON_HIDDEN_STAY_SECONDS",
+    )
+    rule_person_hidden_max_movement: float = Field(
+        default=20.0,
+        alias="RULE_PERSON_HIDDEN_MAX_MOVEMENT",
+    )
+    rule_vehicle_long_parking_enabled: bool = Field(
+        default=True,
+        alias="RULE_VEHICLE_LONG_PARKING_ENABLED",
+    )
+    rule_vehicle_parking_seconds: float = Field(
+        default=600.0,
+        alias="RULE_VEHICLE_PARKING_SECONDS",
+    )
+    rule_vehicle_parking_movement_threshold: float = Field(
+        default=15.0,
+        alias="RULE_VEHICLE_PARKING_MOVEMENT_THRESHOLD",
+    )
+    rule_double_parking_enabled: bool = Field(
+        default=True,
+        alias="RULE_DOUBLE_PARKING_ENABLED",
+    )
+    rule_double_parking_seconds: float = Field(
+        default=180.0,
+        alias="RULE_DOUBLE_PARKING_SECONDS",
+    )
+    rule_street_zone_y_start: float = Field(
+        default=0.55,
+        alias="RULE_STREET_ZONE_Y_START",
+    )
+    rule_wrong_direction_enabled: bool = Field(
+        default=False,
+        alias="RULE_WRONG_DIRECTION_ENABLED",
+    )
+    rule_expected_traffic_direction: str = Field(
+        default="ltr",
+        alias="RULE_EXPECTED_TRAFFIC_DIRECTION",
+    )
+    rule_wrong_direction_min_displacement: float = Field(
+        default=40.0,
+        alias="RULE_WRONG_DIRECTION_MIN_DISPLACEMENT",
+    )
+    rule_park_occupancy_enabled: bool = Field(
+        default=True,
+        alias="RULE_PARK_OCCUPANCY_ENABLED",
+    )
+    rule_park_occupancy_change_threshold: int = Field(
+        default=5,
+        alias="RULE_PARK_OCCUPANCY_CHANGE_THRESHOLD",
+    )
+    rule_park_empty_enabled: bool = Field(
+        default=True,
+        alias="RULE_PARK_EMPTY_ENABLED",
+    )
+    rule_park_empty_seconds: float = Field(
+        default=1800.0,
+        alias="RULE_PARK_EMPTY_SECONDS",
+    )
+    rule_abandoned_object_seconds: float = Field(
+        default=900.0,
+        alias="RULE_ABANDONED_OBJECT_SECONDS",
+    )
+    rule_animal_enabled: bool = Field(
+        default=True,
+        alias="RULE_ANIMAL_ENABLED",
+    )
+    rule_animal_classes: str = Field(
+        default="dog,cat",
+        alias="RULE_ANIMAL_CLASSES",
+    )
+    rule_animal_cooldown_seconds: float = Field(
+        default=60.0,
+        alias="RULE_ANIMAL_COOLDOWN_SECONDS",
+    )
+    rule_trash_detected_enabled: bool = Field(
+        default=False,
+        alias="RULE_TRASH_DETECTED_ENABLED",
+    )
+    rule_obstruction_detected_enabled: bool = Field(
+        default=False,
+        alias="RULE_OBSTRUCTION_DETECTED_ENABLED",
+    )
+    rule_metrics_enabled: bool = Field(default=True, alias="RULE_METRICS_ENABLED")
+
     # --- LLM (FASE 7) ---
     llm_provider: str = Field(default="ollama", alias="LLM_PROVIDER")
     llm_base_url: str = Field(
@@ -140,17 +285,37 @@ class Settings(BaseSettings):
     rtsp_transport: str = Field(default="tcp", alias="RTSP_TRANSPORT")
     rtsp_buffer_size: int = Field(default=1, alias="RTSP_BUFFER_SIZE")
     rtsp_reconnect_delay_seconds: float = Field(
-        default=5.0,
+        default=3.0,
         alias="RTSP_RECONNECT_DELAY_SECONDS",
     )
     rtsp_read_failures_before_reconnect: int = Field(
         default=3,
         alias="RTSP_READ_FAILURES_BEFORE_RECONNECT",
     )
-    rtsp_warmup_seconds: float = Field(default=10.0, alias="RTSP_WARMUP_SECONDS")
+    rtsp_warmup_seconds: float = Field(default=3.0, alias="RTSP_WARMUP_SECONDS")
     rtsp_transport_fallback: bool = Field(
         default=True,
         alias="RTSP_TRANSPORT_FALLBACK",
+    )
+    rtsp_probe_timeout_seconds: float = Field(
+        default=5.0,
+        alias="RTSP_PROBE_TIMEOUT_SECONDS",
+    )
+    rtsp_use_ffmpeg_first: bool = Field(
+        default=True,
+        alias="RTSP_USE_FFMPEG_FIRST",
+    )
+    rtsp_ffmpeg_output_max_width: int = Field(
+        default=640,
+        alias="RTSP_FFMPEG_OUTPUT_MAX_WIDTH",
+    )
+    rtsp_ffmpeg_read_timeout_seconds: float = Field(
+        default=30.0,
+        alias="RTSP_FFMPEG_READ_TIMEOUT_SECONDS",
+    )
+    ip_webcam_prefer_http: bool = Field(
+        default=True,
+        alias="IP_WEBCAM_PREFER_HTTP",
     )
 
     @property
@@ -174,6 +339,12 @@ class Settings(BaseSettings):
             item.strip()
             for item in self.event_abandoned_classes.split(",")
             if item.strip()
+        )
+
+    @property
+    def rule_animal_class_set(self) -> frozenset[str]:
+        return frozenset(
+            item.strip() for item in self.rule_animal_classes.split(",") if item.strip()
         )
 
     @property

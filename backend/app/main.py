@@ -3,7 +3,9 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
+from app.capture.preview import PreviewFrameStore
 from app.api.router import api_router
 from app.core.config import Settings, get_settings
 from app.core.handlers import register_exception_handlers
@@ -27,7 +29,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         ws_manager = WebSocketManager(app_settings)
         app.state.ws_manager = ws_manager
 
-        stream_service = CameraStreamService(app_settings, ws_manager=ws_manager)
+        preview_store = PreviewFrameStore()
+        app.state.preview_store = preview_store
+
+        stream_service = CameraStreamService(
+            app_settings,
+            ws_manager=ws_manager,
+            preview_store=preview_store,
+        )
         app.state.camera_stream_service = stream_service
 
         if app_settings.seed_demo_data and app_settings.is_development:
@@ -42,7 +51,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
         yield
 
+        logger.info("Stopping camera workers...")
         await stream_service.stop_all()
+        logger.info("Disposing database engine...")
         await dispose_engine()
         logger.info("Shutting down %s", app_settings.app_name)
 
@@ -55,6 +66,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
 
     app.state.settings = app_settings
+
+    if app_settings.is_development or app_settings.is_testing:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=[
+                "http://localhost:5173",
+                "http://127.0.0.1:5173",
+            ],
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
 
     register_exception_handlers(app)
     app.include_router(api_router, prefix=app_settings.api_v1_prefix)

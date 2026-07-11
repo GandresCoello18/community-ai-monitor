@@ -1,4 +1,10 @@
-from app.capture.url_utils import apply_rtsp_transport, build_rtsp_ffmpeg_options, mask_stream_url
+from app.capture.url_utils import (
+    apply_rtsp_transport,
+    build_rtsp_ffmpeg_options,
+    ip_webcam_http_url,
+    is_ip_webcam_rtsp,
+    mask_stream_url,
+)
 
 
 def test_mask_stream_url_hides_credentials() -> None:
@@ -36,3 +42,16 @@ def test_build_rtsp_ffmpeg_options_includes_transport() -> None:
     options = build_rtsp_ffmpeg_options("udp")
     assert "rtsp_transport;udp" in options
     assert "fflags;nobuffer" in options
+
+
+def test_is_ip_webcam_rtsp_detects_mobile_app_url() -> None:
+    assert is_ip_webcam_rtsp("rtsp://192.168.3.216:8080/h264_pcm.sdp")
+    assert is_ip_webcam_rtsp("rtsp://192.168.3.216:8080/h264_ulaw.sdp")
+    assert not is_ip_webcam_rtsp("rtsp://192.168.1.50:554/stream1")
+
+
+def test_ip_webcam_http_url_maps_to_video_endpoint() -> None:
+    assert (
+        ip_webcam_http_url("rtsp://192.168.3.216:8080/h264_pcm.sdp")
+        == "http://192.168.3.216:8080/video"
+    )

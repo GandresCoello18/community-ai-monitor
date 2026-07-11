@@ -29,6 +29,13 @@ class CameraCreate(BaseModel):
     is_active: bool = True
 
 
+class CameraUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=120)
+    location: str | None = Field(default=None, min_length=1, max_length=255)
+    stream_url: str | None = None
+    is_active: bool | None = None
+
+
 class CameraResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

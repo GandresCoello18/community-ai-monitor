@@ -1,0 +1,387 @@
+---
+description: Reglas de UX para el frontend de Community AI Monitor
+globs:
+  - "frontend/**/*"
+alwaysApply: true
+---
+
+# Frontend UX Rules
+
+## 1. Objetivo
+
+El frontend será utilizado por:
+
+- Vecinos.
+- Administradores del barrio.
+- Personal del municipio.
+- Usuarios con distintos niveles de conocimiento tecnológico.
+
+La prioridad es que cualquier persona pueda utilizar el sistema sin capacitación previa.
+
+La interfaz debe ser intuitiva.
+
+---
+
+# 2. Principio principal
+
+Siempre priorizar:
+
+Claridad
+
+sobre
+
+Originalidad.
+
+Si una decisión de diseño hace la interfaz más bonita pero más difícil de entender, debe descartarse.
+
+---
+
+# 3. Menos es más
+
+Cada pantalla debe responder una única pregunta.
+
+Ejemplos:
+
+Dashboard
+
+→ ¿Qué está ocurriendo ahora?
+
+Eventos
+
+→ ¿Qué pasó?
+
+Cámaras
+
+→ ¿Qué cámaras existen?
+
+Configuración
+
+→ ¿Cómo modificar el sistema?
+
+Evitar mezclar demasiadas responsabilidades en una misma vista.
+
+---
+
+# 4. Navegación
+
+La navegación debe ser extremadamente simple.
+
+Preferir:
+
+- Menú lateral.
+- Encabezado simple.
+- Breadcrumb cuando sea necesario.
+
+Evitar menús complejos.
+
+---
+
+# 5. Lenguaje
+
+Todo el texto debe escribirse en lenguaje sencillo.
+
+Preferir:
+
+"Agregar cámara"
+
+sobre
+
+"Registrar nueva fuente de adquisición de video"
+
+Preferir:
+
+"Guardar"
+
+sobre
+
+"Persistir cambios"
+
+No utilizar terminología técnica cuando exista una alternativa simple.
+
+---
+
+# 6. Información importante
+
+Mostrar primero:
+
+- Alertas.
+- Eventos importantes.
+- Estado del sistema.
+
+Después:
+
+- Estadísticas.
+- Configuración.
+- Información secundaria.
+
+---
+
+# 7. Colores
+
+Los colores deben comunicar estados.
+
+Nunca utilizar colores únicamente como decoración.
+
+Ejemplo:
+
+Verde
+
+Sistema funcionando.
+
+Amarillo
+
+Advertencia.
+
+Rojo
+
+Requiere atención.
+
+Azul
+
+Información.
+
+---
+
+# 8. Iconos
+
+Los iconos siempre deben acompañar texto.
+
+Correcto:
+
+[📷] Cámaras
+
+Incorrecto:
+
+Solo un icono sin explicación.
+
+Nunca asumir que el usuario entiende el significado del icono.
+
+---
+
+# 9. Botones
+
+Los botones deben indicar claramente la acción.
+
+Correcto:
+
+Guardar
+
+Cancelar
+
+Eliminar cámara
+
+Ver evento
+
+Incorrecto:
+
+Aceptar
+
+Continuar
+
+Acción
+
+---
+
+# 10. Confirmaciones
+
+Solicitar confirmación únicamente para acciones importantes.
+
+Ejemplo:
+
+Eliminar.
+
+Reiniciar.
+
+Cambiar configuración crítica.
+
+No mostrar diálogos innecesarios.
+
+---
+
+# 11. Formularios
+
+Los formularios deben ser cortos.
+
+Agrupar información relacionada.
+
+Mostrar ejemplos cuando sea útil.
+
+Validar inmediatamente los errores.
+
+Nunca esperar hasta enviar el formulario para informar problemas simples.
+
+---
+
+# 12. Mensajes de error
+
+Explicar:
+
+Qué ocurrió.
+
+Cómo solucionarlo.
+
+Ejemplo:
+
+"No fue posible conectar con la cámara."
+
+en lugar de:
+
+"Error 500"
+
+---
+
+# 13. Estados vacíos
+
+Cuando no existan datos:
+
+Explicar la situación.
+
+Ejemplo:
+
+"No existen eventos registrados todavía."
+
+Agregar una acción cuando sea posible.
+
+---
+
+# 14. Estados de carga
+
+Toda operación que tarde más de unos cientos de milisegundos debe mostrar:
+
+- indicador de carga,
+- skeleton,
+- progreso.
+
+Nunca dejar la pantalla congelada.
+
+---
+
+# 15. Feedback
+
+Toda acción importante debe tener respuesta.
+
+Guardar
+
+↓
+
+Indicador de carga
+
+↓
+
+Mensaje de éxito
+
+o
+
+↓
+
+Mensaje de error
+
+El usuario nunca debe preguntarse si la acción funcionó.
+
+---
+
+# 16. Dashboard
+
+La pantalla principal debe responder en menos de cinco segundos:
+
+- ¿Todo funciona correctamente?
+- ¿Hay alertas?
+- ¿Qué ocurrió recientemente?
+
+El usuario no debe buscar la información crítica.
+
+---
+
+# 17. Accesibilidad
+
+Considerar:
+
+- Texto legible.
+- Contraste adecuado.
+- Botones grandes.
+- Espacios suficientes entre elementos.
+
+Pensar en adultos mayores y personas con dificultades visuales.
+
+---
+
+# 18. Responsive
+
+El sistema debe funcionar correctamente en:
+
+- Celulares.
+- Tablets.
+- Computadoras.
+
+No eliminar funcionalidades importantes en dispositivos pequeños.
+
+---
+
+# 19. Consistencia
+
+Los mismos componentes deben comportarse igual en toda la aplicación.
+
+Un botón de guardar debe verse y funcionar igual en cualquier pantalla.
+
+---
+
+# 20. Evitar complejidad innecesaria
+
+No agregar:
+
+- Animaciones excesivas.
+- Efectos llamativos.
+- Paneles flotantes innecesarios.
+- Elementos decorativos que distraigan.
+
+La información siempre tiene prioridad.
+
+---
+
+# 21. Acciones críticas
+
+Las acciones peligrosas deben diferenciarse claramente.
+
+Ejemplo:
+
+Eliminar.
+
+Desactivar.
+
+Reiniciar.
+
+Utilizar color y confirmación.
+
+---
+
+# 22. Filosofía de diseño
+
+El usuario no debe necesitar leer un manual.
+
+La interfaz debe guiar naturalmente las acciones.
+
+Si una pantalla necesita demasiadas explicaciones, probablemente el diseño debe simplificarse.
+
+---
+
+# 23. Regla para Cursor
+
+Al generar una interfaz:
+
+Antes de agregar un componente, preguntar internamente:
+
+- ¿Es realmente necesario?
+- ¿Aporta valor?
+- ¿Hace la tarea más sencilla?
+
+Si la respuesta es no, no agregarlo.
+
+---
+
+# 24. Regla final
+
+Diseñar siempre pensando en la persona menos técnica que utilizará el sistema.
+
+El objetivo no es impresionar visualmente.
+
+El objetivo es que cualquier vecino, administrador o funcionario pueda entender rápidamente qué está ocurriendo en la comunidad y qué acciones puede realizar.

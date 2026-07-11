@@ -353,7 +353,35 @@ Time exceeded
 
 ---
 
-# Fase 7 — LLM
+# Fase 6b — Motor de reglas comunitarias (Rule Engine)
+
+Capa de interpretación sobre detecciones + tracking. No modifica YOLO ni modelos CV.
+
+Flujo:
+
+```
+Detection → Tracking → Rule Engine → Events / Metrics → Database
+```
+
+## Checklist
+
+- [x] Módulo `rules/` (`engine`, `base_rule`, `config`, `factory`, `utils`).
+- [x] Reglas de personas: `person_long_stay`, `person_repeated_activity`, `person_hidden_activity`, `crowd_detected`.
+- [x] Reglas de vehículos: `vehicle_long_parking`, `double_parking`, `wrong_direction` (opt-in).
+- [x] Reglas de parque: `park_occupancy_changed`, `park_empty`, métricas por zona interna.
+- [x] Reglas de objetos: `abandoned_object`.
+- [x] Reglas de animales: `animal_detected`.
+- [x] Tráfico / densidad: `high_density`, conteos y flujo vehicular (métricas).
+- [x] Placeholders: `trash_detected`, `obstruction_detected`, LPR (`VehicleMetadata`, `PlateRecognitionProvider`).
+- [x] Configuración centralizada (`RulesConfig` + variables `RULE_*`).
+- [x] `EventIngestionService` integrado con `RuleEngine` y persistencia de métricas.
+- [x] Modelo `CommunityMetric` + migración Alembic `003_community_metrics`.
+- [x] Compatibilidad con módulo `events/` (alias legacy `long_presence` opcional).
+- [x] Tests unitarios en `tests/rules/`.
+
+**Estado: COMPLETADA.**
+
+---
 
 Después de tener eventos.
 
@@ -492,15 +520,33 @@ Frontend
 
 # Fase 10 — Frontend
 
-Ahora sí.
+React dashboard (SPA).
 
-React:
+## Fase 10a — Infraestructura base (completada)
 
-* Dashboard.
-* Lista de cámaras.
-* Eventos.
-* Estadísticas.
-* Gráficos.
+- [x] Vite + React 19 + TypeScript estricto
+- [x] Tailwind CSS v4 (`@theme`, light/dark)
+- [x] React Router (login, dashboard, cámaras, eventos, estadísticas, config, 404)
+- [x] Layouts: Auth, Dashboard, Main
+- [x] TanStack Query + Axios (`api/client.ts`, errores centralizados)
+- [x] WebSocket: servicio nativo + provider + hook (alineado con FastAPI)
+- [x] Socket.io adapter preparado (no conectado; backend usa WS nativo)
+- [x] Zustand (tema global)
+- [x] Componentes UI base (Button, Card, Input, Modal, Table, Badge, Spinner, EmptyState)
+- [x] Vitest + prueba de ejemplo
+
+## Fase 10b — Pantallas de negocio (en progreso)
+
+- [x] Dashboard con datos reales (estadísticas + eventos recientes).
+- [x] Lista de cámaras con estado de stream.
+- [x] Eventos con paginación + actualización vía WebSocket.
+- [x] Estadísticas agregadas (por tipo, severidad, cámara).
+- [x] Indicador de conexión API / WebSocket en header.
+- [x] Vista previa en vivo por cámara (MJPEG, solo memoria).
+- [ ] Gráficos.
+- [ ] Autenticación.
+
+**Estado Fase 10a: COMPLETADA. Fase 10b: EN PROGRESO.**
 
 ---
 

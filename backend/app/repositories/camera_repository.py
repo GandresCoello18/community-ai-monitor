@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -37,3 +38,9 @@ class CameraRepository:
             Camera.deleted_at.is_(None),
         )
         return await self._session.scalar(stmt)
+
+    async def soft_delete(self, camera: Camera) -> None:
+        now = datetime.now(UTC)
+        camera.deleted_at = now
+        camera.is_active = False
+        camera.updated_at = now

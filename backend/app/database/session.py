@@ -1,3 +1,4 @@
+import asyncio
 from collections.abc import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import (
@@ -42,6 +43,9 @@ async def get_db_session(settings: Settings) -> AsyncGenerator[AsyncSession, Non
         try:
             yield session
             await session.commit()
+        except asyncio.CancelledError:
+            await session.rollback()
+            raise
         except Exception:
             await session.rollback()
             raise

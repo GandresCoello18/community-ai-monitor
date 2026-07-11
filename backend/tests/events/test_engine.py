@@ -46,11 +46,7 @@ def test_event_engine_runs_multiple_rules() -> None:
 def test_create_event_engine_respects_disabled_rules() -> None:
     settings = Settings(
         app_env="testing",
-        event_engine_enabled=True,
-        event_crowd_enabled=False,
-        event_high_density_enabled=False,
-        event_long_presence_enabled=False,
-        event_abandoned_object_enabled=False,
+        rule_engine_enabled=False,
     )
 
     engine = create_event_engine(CAMERA_ID, settings)
@@ -65,14 +61,22 @@ async def test_event_ingestion_service_persists_events(
 ) -> None:
     settings = test_settings.model_copy(
         update={
-            "event_engine_enabled": True,
+            "rule_engine_enabled": True,
             "event_persist_enabled": True,
-            "event_crowd_enabled": True,
-            "event_crowd_people_threshold": 2,
+            "rule_crowd_threshold": 2,
             "event_cooldown_seconds": 0,
+            "event_crowd_enabled": True,
             "event_high_density_enabled": False,
             "event_long_presence_enabled": False,
             "event_abandoned_object_enabled": False,
+            "rule_person_repeated_activity_enabled": False,
+            "rule_person_hidden_activity_enabled": False,
+            "rule_vehicle_long_parking_enabled": False,
+            "rule_double_parking_enabled": False,
+            "rule_park_occupancy_enabled": False,
+            "rule_park_empty_enabled": False,
+            "rule_animal_enabled": False,
+            "rule_metrics_enabled": False,
         }
     )
     session_factory = get_session_factory(settings)

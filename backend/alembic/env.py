@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from app.core.config import get_settings
 from app.database.base import Base
-from app.models import Camera, Configuration, Detection, Event  # noqa: F401
+from app.models import Camera, CommunityMetric, Configuration, Detection, Event  # noqa: F401
 
 config = context.config
 

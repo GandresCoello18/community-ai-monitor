@@ -1,15 +1,17 @@
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.capture.url_utils import mask_stream_url
 from app.core.config import Settings
-from app.core.exceptions import NotFoundError
+from app.core.exceptions import AppException, NotFoundError
 from app.models import Camera
 from app.repositories.camera_repository import CameraRepository
 from app.schemas.camera import (
     CameraCreate,
     CameraResponse,
+    CameraUpdate,
     PaginatedResponse,
     PaginationMeta,
 )
@@ -52,6 +54,39 @@ class CameraService:
             is_active=payload.is_active,
         )
         self._repository.add(camera)
+        await self._session.flush()
+        return ApiResponse(data=to_camera_response(camera))
+
+    async def update_camera(
+        self,
+        camera_id: UUID,
+        payload: CameraUpdate,
+    ) -> ApiResponse[CameraResponse]:
+        camera = await self._repository.get_by_id(camera_id)
+        if camera is None:
+            raise NotFoundError("CAMERA_NOT_FOUND", "Camera does not exist")
+
+        updates = payload.model_dump(exclude_unset=True)
+        if not updates:
+            raise AppException(
+                code="VALIDATION_ERROR",
+                message="At least one field must be provided",
+                status_code=422,
+            )
+
+        for field, value in updates.items():
+            setattr(camera, field, value)
+
+        camera.updated_at = datetime.now(UTC)
+        await self._session.flush()
+        return ApiResponse(data=to_camera_response(camera))
+
+    async def delete_camera(self, camera_id: UUID) -> ApiResponse[CameraResponse]:
+        camera = await self._repository.get_by_id(camera_id)
+        if camera is None:
+            raise NotFoundError("CAMERA_NOT_FOUND", "Camera does not exist")
+
+        await self._repository.soft_delete(camera)
         await self._session.flush()
         return ApiResponse(data=to_camera_response(camera))
 

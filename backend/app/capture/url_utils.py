@@ -1,6 +1,12 @@
 """Utilities for camera stream URLs (FASE 11 — RTSP)."""
 
+import re
 from urllib.parse import urlparse, urlunparse
+
+_IP_WEBCAM_RTSP = re.compile(
+    r"^rtsp://(?P<host>[^/:]+)(?::8080)?/h264_(?:pcm|ulaw)\.sdp$",
+    re.IGNORECASE,
+)
 
 
 def mask_stream_url(url: str | None) -> str | None:
@@ -36,7 +42,20 @@ def build_rtsp_ffmpeg_options(transport: str) -> str:
     return (
         f"rtsp_transport;{transport}|"
         "fflags;nobuffer|"
-        "flags;low_delay|"
         "max_delay;500000|"
         "stimeout;10000000"
     )
+
+
+def is_ip_webcam_rtsp(url: str) -> bool:
+    """True for IP Webcam mobile app RTSP endpoints (port 8080, h264_*.sdp)."""
+    return _IP_WEBCAM_RTSP.match(url.strip()) is not None
+
+
+def ip_webcam_http_url(rtsp_url: str) -> str | None:
+    """Map IP Webcam RTSP URL to its MJPEG HTTP endpoint (/video)."""
+    match = _IP_WEBCAM_RTSP.match(rtsp_url.strip())
+    if match is None:
+        return None
+    host = match.group("host")
+    return f"http://{host}:8080/video"

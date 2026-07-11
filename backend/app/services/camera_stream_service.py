@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from datetime import UTC, datetime
 from uuid import UUID
@@ -6,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.capture.base import Frame
 from app.capture.factory import create_frame_source
+from app.capture.preview import PreviewFrameStore
 from app.core.config import Settings
 from app.core.exceptions import NotFoundError
 from app.detection.base import ObjectDetector
@@ -32,11 +34,13 @@ class CameraStreamService:
         self,
         settings: Settings,
         ws_manager: WebSocketManager | None = None,
+        preview_store: PreviewFrameStore | None = None,
     ) -> None:
         self._settings = settings
         self._workers: dict[UUID, CameraSimulatorWorker] = {}
         self._detector: ObjectDetector | None = None
         self._event_ingestion = EventIngestionService(settings, ws_manager=ws_manager)
+        self._preview_store = preview_store
 
     def _get_detector(self) -> ObjectDetector:
         if self._detector is None:
@@ -51,8 +55,9 @@ class CameraStreamService:
 
         repository = CameraRepository(session)
         cameras = await repository.list_active(offset=0, limit=1000)
-        for camera in cameras:
-            await self.start_camera(camera.id, camera.stream_url)
+        await asyncio.gather(
+            *(self.start_camera(camera.id, camera.stream_url) for camera in cameras)
+        )
 
     async def start_camera(
         self,
@@ -81,22 +86,37 @@ class CameraStreamService:
             pipeline=pipeline,
             on_detections=self._on_detections,
             inference_interval=self._settings.detection_interval_seconds,
+            preview_store=self._preview_store,
+            preview_settings=self._settings,
         )
         await worker.start()
         self._workers[camera_id] = worker
         return worker.get_status()
 
     async def stop_camera(self, camera_id: UUID) -> StreamStatus:
-        worker = self._workers.pop(camera_id, None)
+        worker = self._workers.get(camera_id)
         if worker is None:
             raise NotFoundError("STREAM_NOT_FOUND", "Camera stream is not running")
+        status = worker.get_status()
+        await self.stop_camera_if_running(camera_id)
+        return status
+
+    async def stop_camera_if_running(self, camera_id: UUID) -> None:
+        worker = self._workers.pop(camera_id, None)
+        if worker is None:
+            return
         self._event_ingestion.unregister_camera(camera_id)
         await worker.stop()
-        return worker.get_status()
+        if self._preview_store is not None:
+            self._preview_store.clear(camera_id)
 
     async def stop_all(self) -> None:
-        for camera_id in list(self._workers.keys()):
-            await self.stop_camera(camera_id)
+        camera_ids = list(self._workers.keys())
+        if not camera_ids:
+            return
+        await asyncio.gather(
+            *(self.stop_camera_if_running(camera_id) for camera_id in camera_ids)
+        )
 
     async def _on_detections(
         self,
