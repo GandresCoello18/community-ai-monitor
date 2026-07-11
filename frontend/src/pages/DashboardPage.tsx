@@ -1,7 +1,11 @@
+import { useMemo } from "react";
+
 import { Card } from "@/components/ui";
 import { QueryPanel } from "@/components/common/QueryPanel";
 import { EventsTable } from "@/components/events/EventsTable";
+import { useCameras } from "@/hooks/useCameras";
 import { useEventStatistics, useEvents } from "@/hooks/useEvents";
+import type { CameraLookup } from "@/types/api";
 
 function StatCard({ label, value }: { label: string; value: number | string }) {
   return (
@@ -15,9 +19,20 @@ function StatCard({ label, value }: { label: string; value: number | string }) {
 export function DashboardPage() {
   const statsQuery = useEventStatistics();
   const eventsQuery = useEvents({ page: 1, limit: 8 });
+  const camerasQuery = useCameras();
 
   const stats = statsQuery.data;
   const recentEvents = eventsQuery.data?.data ?? [];
+  const camerasById = useMemo(
+    () =>
+      Object.fromEntries(
+        (camerasQuery.data?.data ?? []).map((camera) => [
+          camera.id,
+          { name: camera.name, location: camera.location } satisfies CameraLookup,
+        ]),
+      ),
+    [camerasQuery.data?.data],
+  );
 
   return (
     <div className="space-y-6">
@@ -63,7 +78,11 @@ export function DashboardPage() {
           emptyTitle="Sin eventos recientes"
           emptyDescription="Los nuevos eventos aparecerán aquí en tiempo real."
         >
-          <EventsTable events={recentEvents} />
+          <EventsTable
+            events={recentEvents}
+            camerasById={camerasById}
+            showActions={false}
+          />
         </QueryPanel>
       </Card>
     </div>

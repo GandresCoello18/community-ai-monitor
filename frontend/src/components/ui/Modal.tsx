@@ -11,6 +11,7 @@ export interface ModalProps {
   onClose: () => void;
   children: ReactNode;
   footer?: ReactNode;
+  panelClassName?: string;
 }
 
 export function Modal({
@@ -20,6 +21,7 @@ export function Modal({
   onClose,
   children,
   footer,
+  panelClassName,
 }: ModalProps) {
   const titleId = useId();
   const descriptionId = useId();
@@ -65,6 +67,7 @@ export function Modal({
         className={cn(
           "relative z-10 w-full max-w-lg rounded-[var(--radius-lg)] border border-[var(--color-border)]",
           "bg-[var(--color-surface)] shadow-[var(--shadow-md)]",
+          panelClassName,
         )}
       >
         <div className="border-b border-[var(--color-border)] px-5 py-4">

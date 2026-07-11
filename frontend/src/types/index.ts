@@ -45,4 +45,4 @@ export interface WebSocketMessage<T = unknown> {
   data: T;
 }
 
-export type { Camera, Event, EventCreatedPayload, EventStatistics, HealthStatus, ListEventsParams, StreamStatus } from "./api";
+export type { Camera, Event, EventCreatedPayload, EventStatistics, EventStatisticsParams, HealthStatus, ListEventsParams, StreamStatus } from "./api";

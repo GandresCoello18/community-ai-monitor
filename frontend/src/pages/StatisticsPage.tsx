@@ -1,63 +1,150 @@
-import { Card } from "@/components/ui";
+import { useMemo, useState } from "react";
+
 import { QueryPanel } from "@/components/common/QueryPanel";
+import {
+  DailyBarChart,
+  HorizontalBarChart,
+  StatSummaryCards,
+  StatisticsFilters,
+  type BarChartItem,
+} from "@/components/statistics";
+import { useCameras } from "@/hooks/useCameras";
 import { useEventStatistics } from "@/hooks/useEvents";
+import {
+  getDateRangeParams,
+  type DateRangePreset,
+} from "@/utils/dateRange";
+import { formatEventType, formatSeverity } from "@/utils/format";
 
-function BreakdownList({
-  title,
-  items,
-}: {
-  title: string;
-  items: Record<string, number>;
-}) {
-  const entries = Object.entries(items).sort(([, a], [, b]) => b - a);
+function severityBarColor(severity: string): string {
+  switch (severity.toLowerCase()) {
+    case "critical":
+    case "high":
+      return "var(--color-destructive)";
+    case "medium":
+      return "var(--color-warning)";
+    case "low":
+    default:
+      return "var(--color-info)";
+  }
+}
 
-  return (
-    <Card title={title}>
-      {entries.length === 0 ? (
-        <p className="text-sm text-[var(--color-muted)]">Sin datos.</p>
-      ) : (
-        <ul className="space-y-2">
-          {entries.map(([key, value]) => (
-            <li
-              key={key}
-              className="flex items-center justify-between text-sm"
-            >
-              <span className="capitalize">{key.replaceAll("_", " ")}</span>
-              <span className="font-semibold">{value}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </Card>
-  );
+function recordToBarItems(
+  items: Record<string, number>,
+  formatKey: (key: string) => string,
+  colorForKey?: (key: string) => string,
+): BarChartItem[] {
+  return Object.entries(items).map(([key, value]) => ({
+    key,
+    label: formatKey(key),
+    value,
+    color: colorForKey?.(key),
+  }));
 }
 
 export function StatisticsPage() {
-  const statsQuery = useEventStatistics();
+  const [preset, setPreset] = useState<DateRangePreset>("7d");
+  const [customStart, setCustomStart] = useState("");
+  const [customEnd, setCustomEnd] = useState("");
+
+  const dateRange = useMemo(
+    () => getDateRangeParams(preset, customStart, customEnd),
+    [preset, customStart, customEnd],
+  );
+
+  const skipCustomQuery =
+    preset === "custom" && (!customStart || !customEnd || !dateRange.start_date);
+
+  const statsQuery = useEventStatistics(dateRange);
+  const camerasQuery = useCameras();
   const stats = statsQuery.data;
+
+  const cameraNames = Object.fromEntries(
+    (camerasQuery.data?.data ?? []).map((camera) => [camera.id, camera.name]),
+  );
+
+  const typeItems = useMemo(
+    () => recordToBarItems(stats?.by_type ?? {}, formatEventType),
+    [stats?.by_type],
+  );
+
+  const severityItems = useMemo(
+    () =>
+      recordToBarItems(
+        stats?.by_severity ?? {},
+        formatSeverity,
+        severityBarColor,
+      ),
+    [stats?.by_severity],
+  );
+
+  const cameraItems = useMemo(
+    () =>
+      recordToBarItems(stats?.by_camera ?? {}, (cameraId) =>
+        cameraNames[cameraId] ?? `Cámara ${cameraId.slice(0, 8)}…`,
+      ),
+    [stats?.by_camera, cameraNames],
+  );
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold">Estadísticas</h1>
         <p className="mt-1 text-sm text-[var(--color-muted)]">
-          Métricas agregadas de eventos del sistema.
+          Visualiza tendencias y distribución de eventos. Filtra por día o rango
+          de fechas.
         </p>
       </div>
 
+      <StatisticsFilters
+        preset={preset}
+        customStart={customStart}
+        customEnd={customEnd}
+        onPresetChange={setPreset}
+        onCustomStartChange={setCustomStart}
+        onCustomEndChange={setCustomEnd}
+      />
+
       <QueryPanel
-        isLoading={statsQuery.isLoading}
-        error={statsQuery.error}
-        isEmpty={stats?.total === 0}
+        isLoading={statsQuery.isLoading && !skipCustomQuery}
+        error={skipCustomQuery ? null : statsQuery.error}
+        isEmpty={!skipCustomQuery && stats?.total === 0}
         emptyTitle="Sin estadísticas"
-        emptyDescription="Las métricas aparecerán cuando existan eventos registrados."
+        emptyDescription="No hay eventos en el período seleccionado. Prueba otro rango de fechas."
       >
-        <div className="grid gap-4 lg:grid-cols-3">
-          <BreakdownList title="Por tipo" items={stats?.by_type ?? {}} />
-          <BreakdownList title="Por severidad" items={stats?.by_severity ?? {}} />
-          <BreakdownList title="Por cámara" items={stats?.by_camera ?? {}} />
-        </div>
+        {stats && !skipCustomQuery && (
+          <div className="space-y-6">
+            <StatSummaryCards stats={stats} />
+
+            <DailyBarChart byDay={stats.by_day ?? {}} />
+
+            <div className="grid gap-4 xl:grid-cols-2">
+              <HorizontalBarChart
+                title="Por tipo de evento"
+                description="Eventos más frecuentes en el período."
+                items={typeItems}
+              />
+              <HorizontalBarChart
+                title="Por severidad"
+                description="Distribución según nivel de atención."
+                items={severityItems}
+              />
+            </div>
+
+            <HorizontalBarChart
+              title="Por cámara"
+              description="Cámaras con mayor actividad registrada."
+              items={cameraItems}
+            />
+          </div>
+        )}
       </QueryPanel>
+
+      {skipCustomQuery && (
+        <p className="text-sm text-[var(--color-muted)]">
+          Elige un rango personalizado para ver las estadísticas.
+        </p>
+      )}
     </div>
   );
 }

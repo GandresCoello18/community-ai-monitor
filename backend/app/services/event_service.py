@@ -70,6 +70,7 @@ class EventService:
                 by_type=stats.by_type,
                 by_severity=stats.by_severity,
                 by_camera=stats.by_camera,
+                by_day=stats.by_day,
             ),
             meta=EventStatisticsMeta(
                 period_start=start_date,

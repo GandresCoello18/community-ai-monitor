@@ -8,6 +8,7 @@ class EventStatisticsData(BaseModel):
     by_type: dict[str, int] = Field(default_factory=dict)
     by_severity: dict[str, int] = Field(default_factory=dict)
     by_camera: dict[str, int] = Field(default_factory=dict)
+    by_day: dict[str, int] = Field(default_factory=dict)
 
 
 class EventStatisticsMeta(BaseModel):

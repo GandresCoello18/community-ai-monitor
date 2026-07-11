@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { fetchEvents, fetchEventStatistics } from "@/api/events";
-import type { ListEventsParams } from "@/types/api";
+import type { EventStatisticsParams, ListEventsParams } from "@/types/api";
 
 export function useEvents(params: ListEventsParams = {}) {
   return useQuery({
@@ -11,10 +11,10 @@ export function useEvents(params: ListEventsParams = {}) {
   });
 }
 
-export function useEventStatistics() {
+export function useEventStatistics(params: EventStatisticsParams = {}) {
   return useQuery({
-    queryKey: ["event-statistics"],
-    queryFn: fetchEventStatistics,
+    queryKey: ["event-statistics", params],
+    queryFn: () => fetchEventStatistics(params),
     refetchInterval: 30_000,
   });
 }

@@ -13,6 +13,7 @@ async def test_event_statistics_returns_aggregates(seeded_client) -> None:
     assert payload["data"]["by_severity"]["low"] == 1
     assert payload["data"]["by_severity"]["medium"] == 1
     assert len(payload["data"]["by_camera"]) == 2
+    assert isinstance(payload["data"]["by_day"], dict)
 
 
 @pytest.mark.asyncio

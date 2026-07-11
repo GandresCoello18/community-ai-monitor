@@ -578,6 +578,149 @@ Porque si empiezas aquí, los problemas de red/hardware mezclan problemas de sof
 
 ---
 
+# Fase 12 — Notificaciones Telegram (backend)
+
+Objetivo: alertar a cada barrio/comunidad **sin depender del frontend**.
+El dashboard web (FASE 10) pasa a ser **opcional**; el canal principal de
+información para vecinos es un **grupo de Telegram** por barrio.
+
+## Contexto de producto
+
+* No todos los barrios necesitan dashboard web.
+* WhatsApp es el canal social habitual, pero la **Telegram Bot API es gratuita**,
+  permite enviar fotos a grupos y es más simple de integrar que WhatsApp Business.
+* El backend sigue procesando cámaras, reglas y eventos con normalidad.
+* Solo se **notifica lo importante**, no cada detección ni cada evento de baja
+  severidad.
+
+## Alcance
+
+**Solo backend.** Sin cambios obligatorios en frontend.
+
+```
+Detection → Rule Engine → Event persistido
+                              ↓
+                    NotificationService
+                              ↓
+                    TelegramProvider (HTTPS Bot API)
+                              ↓
+                    Grupo Telegram del barrio
+```
+
+## Módulo propuesto
+
+```
+backend/app/notifications/
+├── base.py           # NotificationProvider (interfaz)
+├── telegram.py       # Telegram Bot API (sendMessage, sendPhoto)
+├── filters.py        # severidad, tipos, cooldown, horario
+├── service.py        # NotificationService (orquestación)
+└── factory.py        # create_notification_provider(settings)
+```
+
+Integración en `EventIngestionService._persist_events`: tras persistir y
+broadcast WebSocket, evaluar si el evento debe notificarse.
+
+## Política de envío
+
+### Mensaje de texto
+
+Enviar para eventos que cumplan **todos** los filtros configurables:
+
+* `NOTIFICATIONS_ENABLED=true`
+* Severidad ≥ `NOTIFY_MIN_SEVERITY` (ej. `medium`)
+* `event_type` incluido en `NOTIFY_EVENT_TYPES` (lista blanca)
+* Cooldown por `(camera_id, event_type)` respetado (`NOTIFY_COOLDOWN_SECONDS`)
+* Opcional: ventana horaria (`NOTIFY_QUIET_HOURS_START` / `END`)
+
+Texto prudente, sin identificar personas (privacidad por diseño):
+
+```
+⚠️ Alerta — Parque Central
+Cámara: Entrada Norte
+Evento: posible aglomeración
+Hora: 2026-07-11 14:30 UTC
+Severidad: high
+```
+
+### Foto adjunta (solo eventos más importantes)
+
+Telegram permite enviar imágenes sin costo adicional. Usar captura **solo**
+cuando la severidad esté en una lista explícita:
+
+* `NOTIFY_PHOTO_MIN_SEVERITY=high` (solo `high`, o `high` + tipos concretos)
+* Generar JPEG en el momento del evento desde `Frame.image` (ya disponible en
+  `EventIngestionService.process_detections`)
+* Reutilizar `encode_preview_jpeg(..., tracked=..., draw_detections=True)` para
+  cajas de detección en la alerta
+* **No persistir** la imagen en BD por defecto; enviar y descartar (o retención
+  corta opcional en disco con TTL, documentada aparte)
+
+Eventos `low` / `medium`: **solo texto**. Eventos `high` (y los que se
+configuren): **texto + foto**.
+
+## Configuración por entorno
+
+Variables en `backend/.env` (ver `backend/.env.example`):
+
+| Variable | Descripción |
+|----------|-------------|
+| `NOTIFICATIONS_ENABLED` | Activa/desactiva el canal |
+| `NOTIFICATION_PROVIDER` | `telegram` (único por ahora) |
+| `TELEGRAM_BOT_TOKEN` | Token del bot (`@BotFather`) |
+| `TELEGRAM_CHAT_ID` | ID del grupo o canal destino |
+| `NOTIFY_MIN_SEVERITY` | Mínimo para cualquier aviso (`medium`, `high`) |
+| `NOTIFY_PHOTO_MIN_SEVERITY` | Mínimo para adjuntar foto (`high`) |
+| `NOTIFY_EVENT_TYPES` | Lista CSV de tipos (vacío = todos los que pasen severidad) |
+| `NOTIFY_COOLDOWN_SECONDS` | Anti-spam entre avisos del mismo tipo/cámara |
+| `NOTIFY_ALERT_JPEG_MAX_WIDTH` | Ancho máximo de la captura de alerta |
+| `NOTIFY_ALERT_JPEG_QUALITY` | Calidad JPEG de la captura |
+
+Futuro (no bloqueante para MVP): tabla `Community` / `NotificationChannel` en
+BD para **un grupo Telegram distinto por barrio** sin redeploy.
+
+## Privacidad y seguridad
+
+* No almacenar frames completos indefinidamente.
+* Mensajes en tono de posible evento, no afirmaciones absolutas.
+* No reconocimiento facial ni datos personales en el texto.
+* `TELEGRAM_BOT_TOKEN` solo en variables de entorno, nunca en el repo.
+* Log sin token ni contenido sensible de chats.
+
+## Dependencias
+
+* `httpx` (ya usado en el proyecto) o `aiohttp` para llamadas async a
+  `https://api.telegram.org/bot<token>/sendMessage` y `sendPhoto`.
+* Sin SDK obligatorio; la Bot API REST es suficiente.
+
+## Checklist
+
+- [ ] Módulo `notifications/` con interfaz `NotificationProvider`.
+- [ ] `TelegramProvider`: `send_message`, `send_photo` (multipart).
+- [ ] `NotificationFilter`: severidad, tipos, cooldown, quiet hours.
+- [ ] `NotificationService` con registro de envíos (evitar duplicados).
+- [ ] Hook en `EventIngestionService` post-persistencia.
+- [ ] Captura JPEG en eventos con foto (`encode_preview_jpeg` + frame del evento).
+- [ ] Variables en `Settings` + `backend/.env.example`.
+- [ ] Tests con mock HTTP (sin bot real en CI).
+- [ ] Documentación de setup del bot y obtención de `chat_id` en README o `docs/`.
+
+## Setup del bot (operación)
+
+1. En Telegram, abrir [@BotFather](https://t.me/BotFather) → `/newbot` → copiar **token**.
+2. Crear grupo del barrio e **invitar al bot** como miembro.
+3. Enviar un mensaje de prueba al grupo.
+4. Obtener `chat_id` del grupo (API `getUpdates` o bot auxiliar como `@userinfobot` / `@RawDataBot`).
+5. Configurar `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` en `.env` del backend.
+6. Reiniciar backend; disparar un evento de prueba con severidad `high`.
+
+**Nota:** la Bot API de Telegram **no cobra por mensaje**. El costo operativo
+es el mismo servidor Docker que ya corre el backend.
+
+**Estado: PENDIENTE.**
+
+---
+
 # Orden resumido
 
 ```
@@ -606,6 +749,8 @@ Porque si empiezas aquí, los problemas de red/hardware mezclan problemas de sof
 12. Frontend
         ↓
 13. Cámaras reales
+        ↓
+14. Notificaciones Telegram (backend, frontend opcional)
 ```
 
 Mi recomendación adicional: antes de generar cualquier código, crear `IMPLEMENTATION_PLAN.md` y luego una regla adicional para Cursor:

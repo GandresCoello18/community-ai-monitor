@@ -14,6 +14,7 @@ class EventStatisticsResult:
     by_type: dict[str, int]
     by_severity: dict[str, int]
     by_camera: dict[str, int]
+    by_day: dict[str, int]
 
 
 class EventRepository:
@@ -109,12 +110,14 @@ class EventRepository:
         by_type = await self._count_grouped("event_type", **filters)
         by_severity = await self._count_grouped("severity", **filters)
         by_camera = await self._count_grouped("camera_id", **filters)
+        by_day = await self._count_by_day(**filters)
 
         return EventStatisticsResult(
             total=total,
             by_type=by_type,
             by_severity=by_severity,
             by_camera=by_camera,
+            by_day=by_day,
         )
 
     async def _count_grouped(
@@ -141,4 +144,29 @@ class EventRepository:
             if key is None:
                 continue
             result[str(key)] = int(count)
+        return result
+
+    async def _count_by_day(
+        self,
+        *,
+        camera_id: UUID | None = None,
+        event_type: str | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+    ) -> dict[str, int]:
+        day_column = func.date(Event.occurred_at)
+        stmt = select(day_column, func.count()).select_from(Event).group_by(day_column)
+        stmt = self._apply_filters(
+            stmt,
+            camera_id=camera_id,
+            event_type=event_type,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        rows = await self._session.execute(stmt)
+        result: dict[str, int] = {}
+        for day_value, count in rows.all():
+            if day_value is None:
+                continue
+            result[str(day_value)] = int(count)
         return result

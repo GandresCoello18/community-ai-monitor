@@ -37,6 +37,14 @@ export interface EventStatistics {
   by_type: Record<string, number>;
   by_severity: Record<string, number>;
   by_camera: Record<string, number>;
+  by_day: Record<string, number>;
+}
+
+export interface EventStatisticsParams {
+  start_date?: string;
+  end_date?: string;
+  camera_id?: string;
+  event_type?: string;
 }
 
 export interface StreamStatus {
@@ -62,4 +70,22 @@ export interface ListEventsParams {
   limit?: number;
   camera_id?: string;
   event_type?: string;
+}
+
+export interface Summary {
+  id: string;
+  period_start: string;
+  period_end: string;
+  summary_text: string;
+  total_events: number;
+  llm_provider: string;
+  llm_model: string;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CameraLookup {
+  name: string;
+  location: string;
 }
