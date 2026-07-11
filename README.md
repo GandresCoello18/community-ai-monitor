@@ -2,6 +2,9 @@
 
 Plataforma inteligente de monitoreo comunitario basada en **visión por computadora** e **inteligencia artificial**. Convierte streams de cámaras en eventos estructurados, estadísticas, alertas y resúmenes en lenguaje natural — **sin reconocimiento facial ni vigilancia invasiva**.
 
+<img width="1115" height="769" alt="Captura de pantalla 2026-07-11 133303" src="https://github.com/user-attachments/assets/8f43ea9d-ab38-4b39-9d86-d3d1de323f4d" />
+
+
 ---
 
 ## Tabla de contenidos
@@ -157,6 +160,9 @@ flowchart TB
 ```
 
 **Flujo obligatorio de IA:**
+
+<img width="1376" height="768" alt="Diagrama-de-flujo-de-arquitectura-para-Community-AI-Monitor" src="https://github.com/user-attachments/assets/65874f95-8d52-40a1-a4d0-1985c53b54c0" />
+
 
 ```
 Video → Computer Vision → Eventos estructurados → LLM / Notificaciones
@@ -694,3 +700,25 @@ Secciones principales del backend:
 ## Licencia y uso
 
 Proyecto de portafolio y demostración técnica. Revisar licencias de YOLO (Ultralytics), Ollama y dependencias antes de uso comercial.
+
+## 👨‍💻 Autores ✒️
+
+- **Andrés Coello Goyes** - _SOFTWARE ENGINEER_ - [Andres Coello](https://linktr.ee/gandrescoello)
+
+#### 🔗 Links
+
+[![portfolio](https://img.shields.io/badge/my_portfolio-000?style=for-the-badge&logo=ko-fi&logoColor=white)](https://andrescoellog.com/)
+[![linkedin](https://img.shields.io/badge/linkedin-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/andrescoellogoyes/)
+[![twitter](https://img.shields.io/badge/twitter-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white)](https://x.com/acoellogoyes)
+
+## 🙏 Expresiones de Gratitud 🎁
+
+- Pásate por mi perfil para ver algún otro proyecto 📢
+- Desarrollemos alguna app juntos, puedes escribirme en mis redes
+- Muchas gracias por pasarte por este proyecto 🤓
+
+---
+
+⌨️ con ❤️ por [Andres Coello Goyes](https://linktr.ee/gandrescoello) 😊
+
+<img width="400" height="400" alt="1764558900283" src="https://github.com/user-attachments/assets/cde88968-7856-49ec-bdb1-53a82bf9caa3" />
