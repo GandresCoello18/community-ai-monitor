@@ -18,6 +18,7 @@ from app.repositories.camera_repository import CameraRepository
 from app.repositories.detection_repository import DetectionRepository
 from app.schemas.common import ApiResponse
 from app.schemas.stream import StreamStatusData, StreamStatusListData
+from app.notifications.factory import create_notification_service
 from app.services.event_ingestion_service import EventIngestionService
 from app.tracking.base import TrackedDetection
 from app.tracking.factory import create_tracker
@@ -39,7 +40,12 @@ class CameraStreamService:
         self._settings = settings
         self._workers: dict[UUID, CameraSimulatorWorker] = {}
         self._detector: ObjectDetector | None = None
-        self._event_ingestion = EventIngestionService(settings, ws_manager=ws_manager)
+        notification_service = create_notification_service(settings)
+        self._event_ingestion = EventIngestionService(
+            settings,
+            ws_manager=ws_manager,
+            notification_service=notification_service,
+        )
         self._preview_store = preview_store
 
     def _get_detector(self) -> ObjectDetector:

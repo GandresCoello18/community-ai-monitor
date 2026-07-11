@@ -695,15 +695,15 @@ BD para **un grupo Telegram distinto por barrio** sin redeploy.
 
 ## Checklist
 
-- [ ] Módulo `notifications/` con interfaz `NotificationProvider`.
-- [ ] `TelegramProvider`: `send_message`, `send_photo` (multipart).
-- [ ] `NotificationFilter`: severidad, tipos, cooldown, quiet hours.
-- [ ] `NotificationService` con registro de envíos (evitar duplicados).
-- [ ] Hook en `EventIngestionService` post-persistencia.
-- [ ] Captura JPEG en eventos con foto (`encode_preview_jpeg` + frame del evento).
-- [ ] Variables en `Settings` + `backend/.env.example`.
-- [ ] Tests con mock HTTP (sin bot real en CI).
-- [ ] Documentación de setup del bot y obtención de `chat_id` en README o `docs/`.
+- [x] Módulo `notifications/` con interfaz `NotificationProvider`.
+- [x] `TelegramProvider`: `send_message`, `send_photo` (multipart).
+- [x] `NotificationFilter`: severidad, tipos, cooldown, quiet hours.
+- [x] `NotificationService` con registro de envíos (evitar duplicados).
+- [x] Hook en `EventIngestionService` post-persistencia.
+- [x] Captura JPEG en eventos con foto (`encode_preview_jpeg` + frame del evento).
+- [x] Variables en `Settings` + `backend/.env.example`.
+- [x] Tests con mock HTTP (sin bot real en CI).
+- [x] Documentación de setup del bot y obtención de `chat_id` en `backend/docs/telegram-notifications.md`.
 
 ## Setup del bot (operación)
 
@@ -717,7 +717,7 @@ BD para **un grupo Telegram distinto por barrio** sin redeploy.
 **Nota:** la Bot API de Telegram **no cobra por mensaje**. El costo operativo
 es el mismo servidor Docker que ya corre el backend.
 
-**Estado: PENDIENTE.**
+**Estado: COMPLETADA.**
 
 ---
 

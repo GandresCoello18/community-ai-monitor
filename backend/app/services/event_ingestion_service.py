@@ -6,8 +6,10 @@ from app.capture.base import Frame
 from app.core.config import Settings
 from app.models import Event
 from app.repositories.event_repository import EventRepository
+from app.notifications.service import NotificationService
 from app.rules.engine import RuleEngine
 from app.rules.factory import create_rule_engine
+from app.tracking.base import TrackedDetection
 from app.tracking.base import TrackedDetection
 from app.websocket.manager import WebSocketManager
 
@@ -21,9 +23,11 @@ class EventIngestionService:
         self,
         settings: Settings,
         ws_manager: WebSocketManager | None = None,
+        notification_service: NotificationService | None = None,
     ) -> None:
         self._settings = settings
         self._ws_manager = ws_manager
+        self._notification_service = notification_service
         self._engines: dict[UUID, RuleEngine] = {}
 
     def register_camera(self, camera_id: UUID) -> None:
@@ -76,13 +80,16 @@ class EventIngestionService:
         if not self._settings.event_persist_enabled:
             return len(result.events)
 
-        await self._persist_events(camera_id, result.events)
+        await self._persist_events(camera_id, result.events, frame=frame, tracked=tracked)
         return len(result.events)
 
     async def _persist_events(
         self,
         camera_id: UUID,
         candidates: list,
+        *,
+        frame: Frame | None = None,
+        tracked: list[TrackedDetection] | None = None,
     ) -> None:
         from app.database.session import get_session_factory  # noqa: PLC0415
 
@@ -134,6 +141,48 @@ class EventIngestionService:
         if self._ws_manager is not None:
             for event in persisted:
                 await self._ws_manager.publish_event_created(event)
+
+        if self._notification_service is not None and persisted:
+            await self._dispatch_notifications(
+                camera_id,
+                persisted,
+                frame=frame,
+                tracked=tracked,
+            )
+
+    async def _dispatch_notifications(
+        self,
+        camera_id: UUID,
+        events: list[Event],
+        *,
+        frame: Frame | None,
+        tracked: list[TrackedDetection] | None,
+    ) -> None:
+        from app.database.session import get_session_factory  # noqa: PLC0415
+        from app.models import Camera  # noqa: PLC0415
+
+        camera_name = "Cámara"
+        camera_location = "Comunidad"
+        session_factory = get_session_factory(self._settings)
+        try:
+            async with session_factory() as session:
+                camera = await session.get(Camera, camera_id)
+                if camera is not None:
+                    camera_name = camera.name
+                    camera_location = camera.location
+        except Exception:
+            logger.exception(
+                "Failed to load camera metadata for notifications camera_id=%s",
+                camera_id,
+            )
+
+        await self._notification_service.notify_events(
+            events,
+            camera_name=camera_name,
+            camera_location=camera_location,
+            frame=frame,
+            tracked=tracked,
+        )
 
     async def _persist_metrics(self, camera_id: UUID, samples: list) -> None:
         from app.database.session import get_session_factory  # noqa: PLC0415

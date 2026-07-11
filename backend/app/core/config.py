@@ -281,6 +281,42 @@ class Settings(BaseSettings):
     # --- WebSocket (FASE 9) ---
     websocket_enabled: bool = Field(default=True, alias="WEBSOCKET_ENABLED")
 
+    # --- Notifications (FASE 12) ---
+    notifications_enabled: bool = Field(default=False, alias="NOTIFICATIONS_ENABLED")
+    notification_provider: str = Field(default="telegram", alias="NOTIFICATION_PROVIDER")
+    telegram_bot_token: str = Field(default="", alias="TELEGRAM_BOT_TOKEN")
+    telegram_chat_id: str = Field(default="", alias="TELEGRAM_CHAT_ID")
+    notify_min_severity: str = Field(default="medium", alias="NOTIFY_MIN_SEVERITY")
+    notify_photo_min_severity: str = Field(
+        default="high",
+        alias="NOTIFY_PHOTO_MIN_SEVERITY",
+    )
+    notify_event_types: str = Field(default="", alias="NOTIFY_EVENT_TYPES")
+    notify_cooldown_seconds: float = Field(
+        default=300.0,
+        alias="NOTIFY_COOLDOWN_SECONDS",
+    )
+    notify_quiet_hours_start: str = Field(
+        default="",
+        alias="NOTIFY_QUIET_HOURS_START",
+    )
+    notify_quiet_hours_end: str = Field(
+        default="",
+        alias="NOTIFY_QUIET_HOURS_END",
+    )
+    notify_alert_jpeg_max_width: int = Field(
+        default=640,
+        alias="NOTIFY_ALERT_JPEG_MAX_WIDTH",
+    )
+    notify_alert_jpeg_quality: int = Field(
+        default=75,
+        alias="NOTIFY_ALERT_JPEG_QUALITY",
+    )
+    notify_http_timeout_seconds: float = Field(
+        default=30.0,
+        alias="NOTIFY_HTTP_TIMEOUT_SECONDS",
+    )
+
     # --- RTSP / IP cameras (FASE 11) ---
     rtsp_transport: str = Field(default="tcp", alias="RTSP_TRANSPORT")
     rtsp_buffer_size: int = Field(default=1, alias="RTSP_BUFFER_SIZE")
@@ -345,6 +381,15 @@ class Settings(BaseSettings):
     def rule_animal_class_set(self) -> frozenset[str]:
         return frozenset(
             item.strip() for item in self.rule_animal_classes.split(",") if item.strip()
+        )
+
+    @property
+    def notify_event_type_set(self) -> frozenset[str]:
+        """Allowed event types for notifications; empty means all eligible types."""
+        return frozenset(
+            item.strip()
+            for item in self.notify_event_types.split(",")
+            if item.strip()
         )
 
     @property
